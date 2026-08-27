@@ -114,7 +114,21 @@ export function lookup(bundle, key) {
     if (node === null || typeof node !== 'object') return undefined;
     node = node[part];
   }
-  return typeof node === 'string' ? node : undefined;
+  if (typeof node === 'string') return node;
+  return isPluralForm(node) ? node : undefined;
+}
+
+/**
+ * A key whose value is a set of plural forms rather than one string.
+ *
+ * `_count` names the placeholder that decides which form is used. Naming it
+ * explicitly beats a convention like "always {count}", because the sentences
+ * that need this already had their own names for the number -- {current},
+ * {ahead}, {days} -- and renaming those in six languages to satisfy the
+ * mechanism would be the mechanism deciding the prose.
+ */
+export function isPluralForm(node) {
+  return Boolean(node) && typeof node === 'object' && typeof node._count === 'string';
 }
 
 /**
@@ -126,8 +140,33 @@ export function lookup(bundle, key) {
  */
 export function placeholdersIn(template) {
   const found = new Set();
-  String(template).replace(/\{(\w+)\}/g, (whole, name) => found.add(name));
+  const scan = (text) => String(text).replace(/\{(\w+)\}/g, (whole, name) => found.add(name));
+
+  if (isPluralForm(template)) {
+    // Every form is scanned, not just one. A translation that names the number
+    // in its plural form and forgets it in the singular reads fine until the
+    // day the count is 1 -- which for "1 night without relief" is the day it
+    // matters most.
+    for (const [name, form] of Object.entries(template)) {
+      if (name !== '_count') scan(form);
+    }
+  } else {
+    scan(template);
+  }
   return [...found].sort();
+}
+
+/**
+ * Pick the plural form this language uses for this number.
+ *
+ * `Intl.PluralRules` is the whole point: Arabic has six categories, French
+ * counts zero as singular, and the "(s)" in the first draft of these bundles
+ * was wrong in both languages at once. Measured: ar gives zero/one/two/few/
+ * many/other for 0/1/2/3/11/100; fr gives "one" for 0.
+ */
+export function selectPlural(forms, count, code) {
+  const category = new Intl.PluralRules(code).select(Number(count));
+  return forms[category] ?? forms.other ?? forms.one;
 }
 
 /** Substitute {named} placeholders. Unknown ones are left visible, not blanked. */
@@ -144,12 +183,16 @@ export function interpolate(template, values = {}) {
  * the page turns it into a visible marker. Neither of them silently papers
  * over it.
  */
-export function translator(bundle, { onMissing } = {}) {
+export function translator(bundle, { code = DEFAULT_LANGUAGE, onMissing } = {}) {
   const t = (key, values) => {
     const template = lookup(bundle, key);
     if (template === undefined) {
       onMissing?.(key);
       return `[${key}]`;
+    }
+    if (isPluralForm(template)) {
+      const count = values?.[template._count];
+      return interpolate(selectPlural(template, count ?? 0, code), values);
     }
     return interpolate(template, values);
   };
@@ -163,7 +206,11 @@ export function keysOf(bundle, prefix = '') {
   const keys = [];
   for (const [name, value] of Object.entries(bundle)) {
     const path = prefix ? `${prefix}.${name}` : name;
-    if (typeof value === 'string') keys.push(path);
+    // A plural object is one KEY, not one key per form -- otherwise Arabic,
+    // with six categories where German has two, could never match the
+    // reference shape, and the parity test would be measuring grammar rather
+    // than coverage.
+    if (typeof value === 'string' || isPluralForm(value)) keys.push(path);
     else if (value && typeof value === 'object') keys.push(...keysOf(value, path));
   }
   return keys.sort();

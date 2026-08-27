@@ -21,7 +21,7 @@ export const fr = {
     description:
       'La température de l’air ne dit pas si la chaleur est dangereuse. Celle du thermomètre ' +
       'mouillé, si. Voyez où vous en êtes, si un ventilateur aide, et quelle heure d’aujourd’hui ' +
-      'est réellement la pire. Fonctionne hors ligne ; récupère la météo réelle si vous le demandez.',
+      'est réellement la pire. Fonctionne hors ligne ; récupère la météo réelle si vous le demandez.',
   },
 
   masthead: {
@@ -30,7 +30,7 @@ export const fr = {
     blurbTerm: 'La température du thermomètre mouillé',
     blurbAfter:
       'en décide. À 45 °C dans l’air sec du désert, une personne en bonne santé transpire et ' +
-      'survit. À 35 °C dans l’air humide, elle ne le peut pas : la sueur n’a nulle part où s’évaporer.',
+      'survit. À 35 °C dans l’air humide, elle ne le peut pas : la sueur n’a nulle part où s’évaporer.',
     whatLabel: 'ce que c’est',
     what:
       'Un calculateur et une série de décisions, pas un service d’alerte. Donnez-lui deux ' +
@@ -54,7 +54,7 @@ export const fr = {
     heading: 'La météo réelle, si vous voulez',
     sub:
       'Tout ce qui suit fonctionne avec les deux curseurs seuls. Récupérer les données horaires ' +
-      'ajoute trois choses que les curseurs ne peuvent pas savoir : quelle heure d’aujourd’hui ' +
+      'ajoute trois choses que les curseurs ne peuvent pas savoir : quelle heure d’aujourd’hui ' +
       'est vraiment la pire, combien de nuits d’affilée n’ont donné aucun répit, et si cette ' +
       'chaleur vous est nouvelle.',
     searchLabel: 'Chercher un lieu',
@@ -64,7 +64,7 @@ export const fr = {
     lookingUp: 'Recherche du lieu…',
     fetching: 'Récupération de la météo horaire pour {place}…',
     askingLocation: 'Demande de votre position au navigateur…',
-    sent: 'Coordonnées envoyées : {latitude}, {longitude}. Rien d’autre n’a quitté ce navigateur.',
+    sent: 'Coordonnées envoyées : {latitude}, {longitude}. Rien d’autre n’a quitté ce navigateur.',
   },
 
   errors: {
@@ -83,7 +83,12 @@ export const fr = {
     sourceDaily: 'minimales quotidiennes',
     sourcePast: '7 derniers jours',
 
-    peakOffsetTitle: 'La pire heure arrive {hours} h {direction} que la plus chaude',
+    peakOffsetTitle: {
+      _count: 'hours',
+      one: 'La pire heure arrive {hours} heure {direction} que la plus chaude',
+      many: 'La pire heure arrive {hours} heures {direction} que la plus chaude',
+      other: 'La pire heure arrive {hours} heures {direction} que la plus chaude',
+    },
     peakEarlier: 'plus tôt',
     peakLater: 'plus tard',
     peakOffsetDetail:
@@ -95,12 +100,28 @@ export const fr = {
       'Aujourd’hui l’heure la plus chaude et la plus dangereuse tombent toutes deux à {hour}. ' +
       'C’est l’exception, pas la règle.',
 
-    nightsTitle: '{current} nuit(s) sans répit',
-    nightsMore: ', {ahead} de plus à venir',
+    nightsTitle: {
+      _count: 'current',
+      one: '{current} nuit sans répit',
+      many: '{current} nuits sans répit',
+      other: '{current} nuits sans répit',
+    },
+    nightsMore: {
+      _count: 'ahead',
+      one: ', et {ahead} autre à venir',
+      many: ', et {ahead} autres à venir',
+      other: ', et {ahead} autres à venir',
+    },
     nightsDetail:
       'La nuit est le moment où un corps évacue la chaleur accumulée dans la journée. Au-dessus ' +
-      'de {threshold} °C il cesse de le faire. Les dégâts d’une canicule s’accumulent aux ' +
-      'troisième et quatrième jours, et cette série dure {total}.',
+      'de {threshold} °C il cesse de le faire. Les dégâts d’une canicule s’accumulent au ' +
+      'troisième et au quatrième jour, et cette série dure {total}.',
+    nightsRun: {
+      _count: 'total',
+      one: '{total} nuit',
+      many: '{total} nuits',
+      other: '{total} nuits',
+    },
     nightsCoolTitle: 'Les nuits refroidissent encore',
     nightsCoolDetail:
       'Chaque nuit de cette période descend sous {threshold} °C, le corps a donc sa chance de ' +
@@ -113,14 +134,14 @@ export const fr = {
       'personnes acclimatées transpirent plus tôt et perdent moins de sel en le faisant.',
     unacclimatisedTitle: 'Il fait {difference} °C de plus que tout ce qu’a connu la semaine dernière',
     unacclimatisedDetail:
-      'Aujourd’hui atteint {today} °C ; le jour le plus chaud des {days} derniers était à ' +
+      'Aujourd’hui atteint {today} °C ; le jour le plus chaud des {days} derniers jours était à ' +
       '{recent} °C. L’acclimatation demande une à deux semaines, c’est pourquoi la première ' +
       'canicule d’un été est régulièrement la plus dangereuse — à des températures que les ' +
       'mêmes personnes ignoreront en août.',
   },
 
   chart: {
-    heading: 'Où cet air vous place',
+    heading: 'Ce que cet air vous fait',
     sub: 'Faites glisser le point, ou utilisez les champs. Chaque ligne vient de la même physique que les chiffres à côté.',
     tempLabel: 'Température de l’air',
     humidityLabel: 'Humidité relative',
@@ -133,7 +154,7 @@ export const fr = {
     legendNoFan: 'sans ventilateur',
     legendIsopleth: 'thermomètre mouillé',
     ariaLabel:
-      'Diagramme d’état de l’air. Votre point : {temp} degrés à {humidity} pour cent ' +
+      'Diagramme d’état de l’air. Votre point : {temp} degrés à {humidity} pour cent ' +
       'd’humidité, thermomètre mouillé {wetBulb} degrés.',
     youLabel: 'vous',
     pointTitle: '{temp} °C à {humidity} % — thermomètre mouillé {wetBulb} °C',
@@ -159,7 +180,7 @@ export const fr = {
     fanMarginal: 'à peine',
     fanHarmful: 'aggrave les choses',
     accuracyGood: 'dans la plage ajustée par Stull (erreur < ~1 °C)',
-    accuracyPoor: 'sous 5 % d’humidité l’ajustement dérive ; à ne prendre qu’à titre indicatif',
+    accuracyPoor: 'sous 5 % d’humidité l’ajustement dérive ; à ne prendre qu’à titre indicatif',
     accuracyEdge: 'hors de la plage ajustée — la valeur est une extrapolation',
   },
 
@@ -173,7 +194,7 @@ export const fr = {
     danger: 'Dangereux',
     dangerHeadline: 'C’est dans ces conditions que surviennent les pathologies de la chaleur.',
     critical: 'Au-delà de la limite',
-    criticalHeadline: 'Dans cet air, un corps ne peut plus évacuer sa chaleur. Sortez-en.',
+    criticalHeadline: 'Dans cet air, un corps ne peut plus évacuer sa chaleur. Sortez de là.',
   },
 
   who: {
@@ -189,10 +210,21 @@ export const fr = {
     noneSelectedBefore: 'Rien de sélectionné — les chiffres ci-dessus décrivent un',
     noneSelectedTerm: 'adulte jeune, en bonne santé, acclimaté, assis immobile à l’ombre',
     noneSelectedAfter: '. C’est sur eux que les limites publiées ont été mesurées.',
-    selected:
-      '{count} facteur(s) sélectionné(s). Le seuil descend de {shift} °C de thermomètre mouillé, ' +
-      'à {threshold} °C. Chaque facteur supplémentaire compte moins que le précédent — trois ' +
-      'facteurs de risque ne rendent personne trois fois plus fragile.',
+    selected: {
+      _count: 'count',
+      one:
+        '{count} facteur sélectionné. Le seuil descend de {shift} °C de thermomètre mouillé, à ' +
+        '{threshold} °C. Chaque facteur supplémentaire compterait moins que le précédent : ' +
+        'trois facteurs de risque ne rendent personne trois fois plus fragile.',
+      many:
+        '{count} facteurs sélectionnés. Le seuil descend de {shift} °C de thermomètre mouillé, ' +
+        'à {threshold} °C. Chaque facteur supplémentaire compte moins que le précédent : trois ' +
+        'facteurs de risque ne rendent personne trois fois plus fragile.',
+      other:
+        '{count} facteurs sélectionnés. Le seuil descend de {shift} °C de thermomètre mouillé, ' +
+        'à {threshold} °C. Chaque facteur supplémentaire compte moins que le précédent : trois ' +
+        'facteurs de risque ne rendent personne trois fois plus fragile.',
+    },
   },
 
   factors: {
@@ -235,23 +267,23 @@ export const fr = {
   },
 
   actions: {
-    heading: 'Quoi faire, dans l’ordre',
+    heading: 'Que faire, dans l’ordre',
     sub: 'Classé selon ce que chaque mesure vaut dans ces conditions. La première ligne est celle qui compte le plus.',
 
-    leaveTitle: 'Rejoignez un air plus frais maintenant',
+    leaveTitle: 'Mettez-vous au frais, maintenant',
     leaveDetail:
-      'Pas de l’ombre, pas un ventilateur — un air réellement plus frais. Un bâtiment public, un ' +
-      'centre commercial, une cave, une voiture climatisée. Dans cet air, rester et tenir ne fait ' +
-      'pas partie des options.',
+      'Ni de l’ombre ni un ventilateur : de l’air vraiment plus frais. Un bâtiment public, ' +
+      'un centre commercial, une cave, une voiture climatisée. Dans cet air, rester et tenir ' +
+      'n’est pas une option.',
     fanOffTitle: 'Éteignez le ventilateur',
     fanOffDetail:
-      '{reason}. Mouillez plutôt votre peau — un linge humide ou un brumisateur fait l’évaporation ' +
-      'que votre sueur n’arrive plus à assurer.',
-    fanOnTitle: 'Ici un ventilateur aide',
+      '{reason}. Mouillez plutôt votre peau : un linge humide ou un brumisateur fait ' +
+      'l’évaporation que votre sueur n’arrive plus à assurer.',
+    fanOnTitle: 'Ici, le ventilateur aide',
     fanOnDetail:
-      'Dirigez-le vers vous, pas vers la pièce — le refroidissement vient de l’air qui passe sur ' +
-      'la peau. Le conseil courant dit d’éteindre les ventilateurs au-dessus de 35 °C ; dans un ' +
-      'air aussi humide, ce conseil est à l’envers.',
+      'Dirigez-le vers vous, pas vers la pièce : la fraîcheur vient de l’air qui passe sur ' +
+      'la peau. Le conseil habituel dit d’éteindre les ventilateurs au-dessus de 35 °C ; dans un ' +
+      'air aussi humide, ce conseil est exactement à l’envers.',
     wetSkinTitle: 'Mouillez votre peau',
     wetSkinDetail:
       'Un linge humide sur la nuque, les avant-bras et le visage, ou un brumisateur. Cela ' +
@@ -269,17 +301,17 @@ export const fr = {
       'vous contrôlez entièrement.',
     checkInTitle: 'Faites en sorte que quelqu’un prenne de vos nouvelles',
     checkInDetail:
-      'Le coup de chaleur retire précisément le jugement nécessaire pour le reconnaître. Un appel ' +
-      'à heure fixe protège mieux que n’importe quelle intention de se surveiller soi-même.',
+      'Le coup de chaleur retire précisément le jugement qu’il faudrait pour le reconnaître. Un ' +
+      'appel à heure fixe protège mieux que toute intention de vous surveiller vous-même.',
     drinkTitle: 'Buvez à heures fixes, pas selon la soif',
     drinkDetail:
       'La soif est un signal peu fiable dans ce groupe, et quand elle arrive le déficit est déjà ' +
-      'là. Un verre chaque heure, qu’on en ait envie ou non.',
-    pharmacistTitle: 'Demandez à un pharmacien pour vos médicaments et la chaleur',
+      'là. Un verre toutes les heures, que vous en ayez envie ou non.',
+    pharmacistTitle: 'Parlez de vos médicaments et de la chaleur à votre pharmacien',
     pharmacistDetail:
-      'Certains médicaments suppriment complètement la transpiration. N’arrêtez rien de vous-même — ' +
-      'mais un pharmacien vous dira en deux minutes si le vôtre est sur cette liste, et cela change ' +
-      'le degré de prudence nécessaire aujourd’hui.',
+      'Certains médicaments suppriment complètement la transpiration. N’arrêtez aucun ' +
+      'traitement de votre propre initiative, mais un pharmacien vous dira en deux minutes ' +
+      'si le vôtre figure sur cette liste, et cela change la prudence qu’il faut aujourd’hui.',
     ventilateTitle: 'N’ouvrez que lorsqu’il fait plus frais dehors que dedans',
     ventilateDetail:
       'La règle que presque tout le monde applique à l’envers. Une fenêtre ouverte l’après-midi ' +
@@ -287,19 +319,19 @@ export const fr = {
       'extérieure passe sous celle de l’intérieur, en général en fin de soirée.',
     emergencyTitle: 'Connaissez le signe qui change tout',
     emergencyDetail:
-      'Confusion, agitation, ou quelqu’un qui a cessé de transpirer par une telle chaleur : c’est ' +
+      'Confusion, agitation, ou quelqu’un qui a cessé de transpirer par une telle chaleur : c’est ' +
       'une urgence médicale, pas un mauvais après-midi. Appelez les secours, puis refroidissez la ' +
       'personne à l’eau en attendant.',
 
     fanReasonHelps: 'l’air en mouvement emporte bien plus de sueur qu’il n’apporte de chaleur — ici le ventilateur fait un vrai travail',
-    fanReasonMarginal: 'le ventilateur aide encore, mais à peine ; il est proche du point où la chaleur qu’il souffle sur vous annule l’évaporation qu’il permet',
+    fanReasonMarginal: 'le ventilateur aide encore, mais à peine ; il est proche du point où la chaleur qu’il souffle sur vous annule l’évaporation qu’il permet',
     fanReasonHarmful: 'l’air est plus chaud que votre peau et votre transpiration est déjà à sa limite, un air plus rapide ne fait donc que vous apporter de la chaleur — un ventilateur aggrave cela',
   },
 
   day: {
     heading: 'La journée, heure par heure',
     subModelled:
-      'Deux questions sur un même axe de temps : quand cet air est au pire, et quand ouvrir une ' +
+      'Deux questions sur un même axe de temps : quand cet air est au pire, et quand ouvrir une ' +
       'fenêtre cesse d’importer de la chaleur. Sans prévision récupérée, les deux courbes sont un ' +
       'modèle construit à partir d’un maximum et d’un minimum, d’où les pointillés.',
     subMeasured:
@@ -315,13 +347,18 @@ export const fr = {
     thresholdLabel: 'votre seuil {value}°',
     nightsCaption: 'les nuits sous {threshold} °C donnent une chance au corps',
     today: 'aujourd’hui',
-    markHottest: 'Heure la plus chaude : {hour}, {temp} °C',
-    markWorst: 'Heure la plus dangereuse : {hour}, thermomètre mouillé {wetBulb} °C',
+    markHottest: 'Heure la plus chaude : {hour}, {temp} °C',
+    markWorst: 'Heure la plus dangereuse : {hour}, thermomètre mouillé {wetBulb} °C',
     aria: 'Température du thermomètre mouillé au fil de la journée. Heure la plus chaude {hottest}, heure la plus dangereuse {worst}.',
-    nightTooltip: '{date} : minimale {low}',
-    nightTooltipHot: '{date} : minimale {low} — aucun répit',
+    nightTooltip: '{date} : minimale {low}',
+    nightTooltipHot: '{date} : minimale {low} — aucun répit',
     unknown: 'inconnue',
-    nightsAria: '{count} nuits consécutives sans répit sur cette période.',
+    nightsAria: {
+      _count: 'count',
+      one: '{count} nuit sans répit sur cette période.',
+      many: '{count} nuits consécutives sans répit sur cette période.',
+      other: '{count} nuits consécutives sans répit sur cette période.',
+    },
     notEnough: 'données insuffisantes',
     legendOutdoors: 'extérieur (modélisé)',
     legendIndoors: 'intérieur (modélisé)',
@@ -374,18 +411,23 @@ export const fr = {
     band6: '≥ 31°',
     band6Note: 'au-delà, lors d’une saison chaude normale',
     bandEmpty: '{note} — aucune cellule ici',
-    factHotCellsTitle: '{count} cellules terrestres sur {total} dépassent 26 °C',
+    factHotCellsTitle: {
+      _count: 'count',
+      one: '{count} cellule terrestre sur {total} dépasse 26 °C',
+      many: '{count} cellules terrestres sur {total} dépassent 26 °C',
+      other: '{count} cellules terrestres sur {total} dépassent 26 °C',
+    },
     factHotCellsDetail:
-      'et elles ne sont pas dispersées : le delta du Gange, le Pendjab, la plaine de Chine du ' +
+      'et elles ne sont pas dispersées : le delta du Gange, le Pendjab, la plaine de Chine du ' +
       'Nord, le Golfe. Environ un cinquième de l’humanité vit dans cette poignée de cellules, et ' +
       'c’est toute la raison de dessiner cette carte.',
     factCeilingTitle: 'Rien ici n’atteint {limit} °C — et ce n’est pas rassurant',
     factCeilingDetail:
-      'Il s’agit du 95e centile sur toute une saison chaude : cela décrit le temps qu’un lieu ' +
-      'connaît la plupart des étés, pas sa pire heure. Des heures isolées montent bien plus haut : ' +
+      'Il s’agit du 95e centile sur toute une saison chaude : cela décrit le temps qu’un lieu ' +
+      'connaît la plupart des étés, pas sa pire heure. Des heures isolées montent bien plus haut : ' +
       '35 °C de thermomètre mouillé ont été relevés sur la côte du golfe Persique. Une cellule à ' +
       '28 °C passe de vraies heures bien au-delà de 31.',
-    factHottestTitle: 'Cellule la plus chaude : {value} °C à {latitude}° {ns}, {longitude}° {ew}',
+    factHottestTitle: 'Cellule la plus chaude : {value} °C à {latitude}° {ns}, {longitude}° {ew}',
     factHottestDetail:
       'Chaque cellule fait {step}° — environ 650 km — elle moyenne donc une côte avec un plateau ' +
       'et une ville avec un champ. Les lieux réels à l’intérieur s’en écartent dans les deux sens.',
@@ -413,7 +455,7 @@ export const fr = {
       'le seul moyen de faire ressortir des murs la chaleur de la veille.',
     internalBlind: 'Fermez rideaux et stores',
     internalBlindDetail:
-      'Cela vaut la peine, et c’est bien plus faible qu’il n’y paraît : quand la lumière atteint ' +
+      'Cela vaut la peine, et c’est bien plus faible qu’il n’y paraît : quand la lumière atteint ' +
       'un rideau intérieur, l’énergie est déjà dans la pièce. Clair et réfléchissant aide un peu.',
     appliances: 'Éteignez tout ce qui chauffe',
     appliancesDetail:
@@ -423,7 +465,7 @@ export const fr = {
     oneRoom: 'Renoncez à l’appartement, défendez une pièce',
     oneRoomDetail:
       'Choisissez la pièce la plus fraîche — exposée au nord, au rez-de-chaussée, aux murs lourds — ' +
-      'et fermez le reste. Refroidir une pièce est réalisable ; refroidir un appartement, avec ces ' +
+      'et fermez le reste. Refroidir une pièce est réalisable ; refroidir un appartement, avec ces ' +
       'moyens, non.',
     dampCloth: 'Refroidissez-vous, pas la pièce',
     dampClothDetail:
@@ -467,7 +509,7 @@ export const fr = {
     shadeLabel: 'à l’ombre, et immobile',
     shade:
       'Chaque chiffre ici suppose l’ombre et le repos. Le soleil direct équivaut à plusieurs ' +
-      'degrés ; le travail physique peut multiplier par dix votre production de chaleur.',
+      'degrés ; le travail physique peut multiplier par dix votre production de chaleur.',
   },
 
   footer: {

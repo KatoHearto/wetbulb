@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { BUNDLES, LANGUAGES, DEFAULT_LANGUAGE, keysOf } from '../src/i18n/index.js';
-import { translator, formatNumber, placeholdersIn } from '../src/i18n/core.js';
+import { translator, formatNumber, isPluralForm, placeholdersIn } from '../src/i18n/core.js';
 
 const REFERENCE = keysOf(BUNDLES[DEFAULT_LANGUAGE]);
 
@@ -49,12 +49,44 @@ for (const { code } of LANGUAGES) {
     assert.deepEqual(extra, [], `extra: ${extra.join(', ')}`);
   });
 
-  test(`${code}: every value is a non-empty string`, () => {
+  test(`${code}: every value is a non-empty string or a full set of plural forms`, () => {
     const bad = keysOf(BUNDLES[code]).filter((k) => {
       const v = k.split('.').reduce((o, p) => o?.[p], BUNDLES[code]);
+      if (isPluralForm(v)) return false;
       return typeof v !== 'string' || v.trim() === '';
     });
     assert.deepEqual(bad, []);
+  });
+
+  test(`${code}: every plural key carries exactly the forms this language needs`, () => {
+    // This is the whole reason plurals are a mechanism rather than a "(s)".
+    // Measured: Arabic needs six categories, and French counts zero as
+    // singular. A hand-written "night(s)" is wrong in both at once.
+    const needed = new Intl.PluralRules(code).resolvedOptions().pluralCategories;
+    const problems = [];
+
+    for (const key of REFERENCE) {
+      const get = (b) => key.split('.').reduce((o, p) => o?.[p], b);
+      const ref = get(BUNDLES[DEFAULT_LANGUAGE]);
+      const mine = get(BUNDLES[code]);
+
+      if (isPluralForm(ref) !== isPluralForm(mine)) {
+        problems.push(`${key}: plural in one bundle and not the other`);
+        continue;
+      }
+      if (!isPluralForm(mine)) continue;
+
+      const have = Object.keys(mine).filter((name) => name !== '_count').sort();
+      const want = [...needed].sort();
+      if (have.join(',') !== want.join(',')) {
+        problems.push(`${key}: has [${have}], needs [${want}]`);
+      }
+      if (mine._count !== ref._count) {
+        problems.push(`${key}: counts {${mine._count}}, reference counts {${ref._count}}`);
+      }
+    }
+
+    assert.deepEqual(problems, [], problems.join(' | '));
   });
 
   test(`${code}: placeholders match the reference exactly`, () => {
@@ -100,6 +132,54 @@ for (const { code } of LANGUAGES) {
       return get(BUNDLES[code]) === get(BUNDLES[DEFAULT_LANGUAGE]);
     });
     assert.deepEqual(same, REVIEWED_COINCIDENCES[code]);
+  });
+}
+
+/**
+ * Which numbers fall into each plural category, for one language.
+ *
+ * Sampled rather than reasoned about: the rules differ per language and are
+ * not something to assume. 0-200 covers every category boundary these bundles
+ * can reach -- Arabic's "many" starts at 11, its "other" at 100.
+ */
+function numbersPerCategory(code) {
+  const rules = new Intl.PluralRules(code);
+  const buckets = new Map();
+  for (let value = 0; value <= 200; value += 1) {
+    const category = rules.select(value);
+    buckets.set(category, (buckets.get(category) ?? 0) + 1);
+  }
+  return buckets;
+}
+
+for (const { code } of LANGUAGES) {
+  test(`${code}: a plural form covering more than one number names the number`, () => {
+    // The trap this exists for, caught in my own French: I wrote the singular
+    // as "Une nuit sans répit" with no placeholder, because in English and
+    // German "one" means exactly 1. In French and Hindi "one" also covers 0 --
+    // so a count of zero rendered as "Une nuit sans répit", which says the
+    // opposite of what happened. The category that covers a single number may
+    // spell it out; the category that covers many must not.
+    const buckets = numbersPerCategory(code);
+    const problems = [];
+
+    for (const key of REFERENCE) {
+      const forms = key.split('.').reduce((o, p) => o?.[p], BUNDLES[code]);
+      if (!isPluralForm(forms)) continue;
+
+      for (const [category, form] of Object.entries(forms)) {
+        if (category === '_count') continue;
+        if ((buckets.get(category) ?? 0) <= 1) continue;
+        if (form === '') continue;
+        if (!form.includes(`{${forms._count}}`)) {
+          problems.push(
+            `${key}.${category} covers ${buckets.get(category)} numbers but never says which`
+          );
+        }
+      }
+    }
+
+    assert.deepEqual(problems, [], problems.join(' | '));
   });
 }
 

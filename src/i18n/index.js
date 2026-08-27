@@ -29,7 +29,7 @@ export const BUNDLES = { en, de, es, fr, hi, ar };
 export { LANGUAGES, DEFAULT_LANGUAGE, languageInfo, keysOf };
 
 let current = DEFAULT_LANGUAGE;
-let translate = translator(BUNDLES[DEFAULT_LANGUAGE]);
+let translate = translator(BUNDLES[DEFAULT_LANGUAGE], { code: DEFAULT_LANGUAGE });
 const listeners = new Set();
 
 /** The active translator. Call it as `t('some.key', { value: 1 })`. */
@@ -66,7 +66,7 @@ export function setLanguage(code, { remember = true } = {}) {
   if (!BUNDLES[code]) return false;
 
   current = code;
-  translate = translator(BUNDLES[code]);
+  translate = translator(BUNDLES[code], { code });
   if (remember) rememberLanguage(code);
 
   const info = languageInfo(code);

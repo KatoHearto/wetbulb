@@ -79,7 +79,11 @@ export const en = {
     sourceDaily: 'daily minima',
     sourcePast: 'past 7 days',
 
-    peakOffsetTitle: 'The worst hour is {hours} h {direction} than the hottest',
+    peakOffsetTitle: {
+      _count: 'hours',
+      one: 'The worst hour is an hour {direction} than the hottest',
+      other: 'The worst hour is {hours} hours {direction} than the hottest',
+    },
     peakEarlier: 'earlier',
     peakLater: 'later',
     peakOffsetDetail:
@@ -91,12 +95,25 @@ export const en = {
       'Today the hottest hour and the most dangerous hour both fall at {hour}. ' +
       'That is the exception, not the rule.',
 
-    nightsTitle: '{current} night(s) without relief',
-    nightsMore: ', {ahead} more coming',
+    nightsTitle: {
+      _count: 'current',
+      one: 'One night without relief',
+      other: '{current} nights without relief',
+    },
+    nightsMore: {
+      _count: 'ahead',
+      one: ', one more coming',
+      other: ', {ahead} more coming',
+    },
     nightsDetail:
       'The night is when a body unloads the heat it took on during the day. Above ' +
       '{threshold} °C it stops doing that. The damage from a heat wave builds over the ' +
       'third and fourth day, and this run is {total} long.',
+    nightsRun: {
+      _count: 'total',
+      one: 'one night',
+      other: '{total} nights',
+    },
     nightsCoolTitle: 'The nights are still cooling down',
     nightsCoolDetail:
       'Every night in this window drops below {threshold} °C, so the body gets its ' +
@@ -109,7 +126,7 @@ export const en = {
       'people sweat sooner and lose less salt doing it.',
     unacclimatisedTitle: 'This is {difference} °C hotter than anything last week',
     unacclimatisedDetail:
-      'Today reaches {today} °C; the warmest day of the past {days} was {recent} °C. ' +
+      'Today reaches {today} °C; the warmest day of the past {days} days was {recent} °C. ' +
       'Acclimatisation takes one to two weeks, which is why the first heat wave of a ' +
       'summer is reliably the most dangerous — at temperatures the same people shrug ' +
       'off in August.',
@@ -185,10 +202,17 @@ export const en = {
     noneSelectedBefore: 'Nothing selected — the numbers above describe a',
     noneSelectedTerm: 'young, healthy, acclimatised adult sitting still in the shade',
     noneSelectedAfter: '. That is who the published limits were measured on.',
-    selected:
-      '{count} factor(s) selected. Threshold moved down by {shift} °C of wet bulb, to ' +
-      '{threshold} °C. Each further factor counts for less than the last — three risk ' +
-      'factors do not make someone three times as fragile.',
+    selected: {
+      _count: 'count',
+      one:
+        'One factor selected. Threshold moved down by {shift} °C of wet bulb, to ' +
+        '{threshold} °C. Each further factor would count for less than the last — three ' +
+        'risk factors do not make someone three times as fragile.',
+      other:
+        '{count} factors selected. Threshold moved down by {shift} °C of wet bulb, to ' +
+        '{threshold} °C. Each further factor counts for less than the last — three risk ' +
+        'factors do not make someone three times as fragile.',
+    },
   },
 
   factors: {
@@ -317,7 +341,11 @@ export const en = {
     nightTooltip: '{date}: low {low}',
     nightTooltipHot: '{date}: low {low} — no relief',
     unknown: 'unknown',
-    nightsAria: '{count} consecutive nights without relief in this window.',
+    nightsAria: {
+      _count: 'count',
+      one: 'One night without relief in this window.',
+      other: '{count} consecutive nights without relief in this window.',
+    },
     notEnough: 'not enough data',
     legendOutdoors: 'outdoors (modelled)',
     legendIndoors: 'indoors (modelled)',
@@ -370,7 +398,11 @@ export const en = {
     band6: '≥ 31°',
     band6Note: 'past it, in a normal hot season',
     bandEmpty: '{note} — no cell here',
-    factHotCellsTitle: '{count} of {total} land cells sit above 26 °C',
+    factHotCellsTitle: {
+      _count: 'count',
+      one: 'One of {total} land cells sits above 26 °C',
+      other: '{count} of {total} land cells sit above 26 °C',
+    },
     factHotCellsDetail:
       'and they are not scattered: the Ganges delta, the Punjab, the North China Plain, ' +
       'the Gulf. Roughly a fifth of humanity lives inside that handful of cells, which ' +

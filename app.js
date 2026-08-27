@@ -360,7 +360,13 @@ function renderFindings() {
       finding(
         t('findings.nightsTitle', { current: nights.current }) +
           (nights.ahead > 0 ? t('findings.nightsMore', { ahead: nights.ahead }) : ''),
-        t('findings.nightsDetail', { threshold: n(nights.threshold, 0), total }),
+        t('findings.nightsDetail', {
+          threshold: n(nights.threshold, 0),
+          // The run length is itself a counted noun ("3 nights" / "one night"),
+          // so it is translated before it is substituted rather than dropped in
+          // as a bare number the sentence then has to agree with.
+          total: t('findings.nightsRun', { total }),
+        }),
         total >= 3 ? 'strong' : 'flat',
         t('findings.sourceDaily')
       )

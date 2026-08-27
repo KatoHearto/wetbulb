@@ -309,14 +309,14 @@ North China Plain, the Persian Gulf. An English-only heat tool is least useful
 exactly where heat is worst, which is a strange thing for a tool about heat to
 be. So the page reads in six languages.
 
-| | | | keys | words |
-|---|---|---|---|---|
-| `en` | English | source | 274 | 2 873 |
-| `de` | Deutsch | | 274 | 2 745 |
-| `es` | Español | | 274 | 3 119 |
-| `fr` | Français | | 274 | 3 141 |
-| `hi` | हिन्दी | Gangetic plain, Punjab — the hottest cells on this page's own map | 274 | 3 267 |
-| `ar` | العربية | Persian Gulf — where 35 °C wet bulb was actually recorded; right-to-left | 274 | 2 440 |
+| | | keys | strings | words | plural categories |
+|---|---|---|---|---|---|
+| `en` | English — source | 275 | 282 | 2 949 | 2 |
+| `de` | Deutsch | 275 | 282 | 2 853 | 2 |
+| `es` | Español | 275 | 289 | 3 282 | 3 |
+| `fr` | Français | 275 | 289 | 3 296 | 3 |
+| `hi` | हिन्दी | 275 | 282 | 3 352 | 2 |
+| `ar` | العربية — right-to-left | 275 | 310 | 2 740 | 6 |
 
 **None of the five translations has been checked by a native speaker**, and
 the page says so, in the language being read, above everything else it says.
@@ -328,71 +328,103 @@ not. English governs; every other language carries a link back to it.
 Portuguese was left out on purpose rather than added for the count. Six
 unchecked translations are already more trust than this can carry.
 
-### What holds it together
+### Plurals are a mechanism, not a "(s)"
 
-Every module that decides something now returns an **id**, not a sentence.
-`actions()` returns `{ id: 'fanOff', tone: 'stop' }`; `fanVerdict()` returns
-`'harmful'`; `wetBulbAccuracy()` returns `'poor'`. The physics files contain no
-English at all any more. That is not tidiness — it is what makes six languages
-possible without six copies of the branching, and it means a new verdict
-cannot ship without somebody noticing it has no words.
+The first draft of these bundles wrote `{current} night(s) without relief`,
+and in Arabic `{current} ليلة/ليالٍ`. Nobody writes that. Worse, it cannot be
+made right by writing it more carefully, because the rules differ per language
+in ways a parenthesis has no way to express. Measured with `Intl.PluralRules`:
 
-Nothing falls back silently. A missing key renders as `[some.key]` on screen,
-because a gap you can see is a gap that gets fixed, and a gap papered over with
-English is a page that lies about being translated.
+| count | en / de | fr / hi | ar |
+|---|---|---|---|
+| 0 | other | **one** | zero |
+| 1 | one | one | one |
+| 2 | other | other | **two** |
+| 3 | other | other | **few** |
+| 11 | other | other | **many** |
+| 100 | other | other | other |
 
-`?lang=hi` works, so "read this in Hindi" is a link you can send.
+Arabic needs six forms and has a real dual: ليلة واحدة, ليلتان, ثلاث ليالٍ.
+French and Hindi count zero as singular. So a plural key is an object of
+forms with a `_count` naming which placeholder decides:
+
+```js
+nightsTitle: {
+  _count: 'current',
+  zero: 'لا ليلة دون راحة',
+  one:  'ليلة واحدة دون راحة',
+  two:  'ليلتان دون راحة',
+  few:  '{current} ليالٍ دون راحة',
+  many: '{current} ليلة دون راحة',
+  other:'{current} ليلة دون راحة',
+},
+```
+
+Seven keys need this. The tests assert that each carries **exactly** the
+categories its language declares — not more, not fewer — and that its
+`_count` matches the reference's.
+
+**A bug this found in my own work.** I wrote the French singular as
+`Une nuit sans répit`, spelling the number as a word, because in English and
+German "one" means exactly 1. In French it also covers 0 — so a count of zero
+rendered as *"one night without relief"*, which says the opposite of what
+happened. There is now a guard for it: sample which numbers fall into each
+category, and if a category covers more than one number, its form must contain
+the count placeholder. It found seven keys in French and seven in Hindi.
 
 ### What the tests hold
 
-Six bundles, checked pairwise against the English one:
-
-- every bundle has **exactly** the same 274 keys — no more, no fewer
-- every `{placeholder}` matches the English template's, in the same set — a
-  translation that drops `{threshold}` still reads like a sentence, and would
-  otherwise silently stop naming the number the sentence is about
-- no value longer than 30 characters is still English
-- the values that **are** identical to English are frozen as a reviewed list
-  per language, so a new untranslated label breaks the build. The list is
-  short and each entry was looked at: `°C`, `Stull 2011`, band ranges like
-  `< 22°`, compass letters, and the handful of words genuinely spelled the same
-  (Spanish and German both write *Diabetes*; French writes *Stimulants*)
+- every bundle has exactly the same 275 keys, and matching `{placeholder}` sets
+  in every plural form, not just one
+- no value longer than 30 characters is still English; the values that *are*
+  identical are frozen as a reviewed per-language list
 - every `data-i18n` hook in `index.html` names a key that exists
-- switching language at runtime redraws the readout, the factors and the
-  actions, flips `dir` to `rtl` for Arabic, and switching back is lossless
+- switching language at runtime redraws everything, flips `dir` for Arabic,
+  and is lossless switching back
+- **typesetting**, per language: French never lets a plain space stand before
+  `:` `;` `!` `?` (U+00A0 before a colon, U+202F before the rest — both
+  invisible in the source, which is why they need a test); Spanish opens every
+  question with `¿`; Hindi ends sentences with `।` not `.`; Arabic uses `،` `؛`
+  `؟`; German has no ASCII transliteration and never switches from *du* to *Sie*
 
-That last one exists because screenshots cannot see it: a screenshot only ever
-loads one language.
+### The same sentence went wrong in four languages
 
-### Three faults only the screenshots found
+`Do not stop taking anything on your own` has an implied object in English.
+None of Spanish, French, Arabic or Hindi carries it for free, and in three of
+them the sentence came out meaning **"do not stop of your own accord"** —
+advice about persistence, on a line about medication. Fixed in all four by
+naming the object: *ningún tratamiento*, *aucun traitement*, *أيّ دواء*.
 
-The suite was green before any of these, which is the point of looking.
+Two more of the same kind: Spanish `Para el trabajo físico` reads as *"For
+physical work"* at least as readily as *"Stop physical work"* — it is a
+heading on a safety instruction and it was ambiguous. French `Quoi faire` is
+simply not how a French heading asks that question.
 
-1. **Every `°C` in `app.js` was a literal.** Arabic writes it `°م`. The readout
-   said `25.8 °C` inside an otherwise Arabic table — a unit in the wrong
-   alphabet, and a content error rather than a styling one. Units are keys now.
+### What the screenshots found this round
 
-2. **The bidi algorithm reordered numbers.** `32.0 °م` rendered as `م° 32.0`,
-   and the margin cell as `5.2° م`. The fix is isolating each number-plus-unit;
-   my *first* fix — forcing the whole readout table left-to-right — is what
-   glued every value to its label, which the next screenshot showed.
+Three German keys shipped ASCII-transliterated — `Heisseste`, `Gefaehrlichste`,
+`Naechte`. They came from a generator script written under a different repo's
+ASCII-only rule for pipeline artefacts, applied out of habit to text a reader
+sees. The guard for it is a **stem list, not a rule**: the first version
+flagged `ae|oe|ue` anywhere and produced 17 false alarms in one run
+(`Mauerwerk`, `Querlüftung`, `dauert`, even the placeholder `{value}`). German
+is full of legitimate *au-e* and *qu-e*. A green result there means "none of
+the usual suspects", not "no transliteration anywhere".
 
-3. **The stylesheet used physical `left`/`right`.** Those do not flip. Under
-   RTL the labels and values hugged each other in the middle of the table.
-   Converted to logical properties (`padding-inline-start`, `text-align: end`),
-   which fixes both directions with one rule.
+### What is deliberately not translated
 
-The charts and the globe deliberately do **not** mirror. A time axis running
-00 to 23 and a temperature axis running cold to hot are not script; flipping
-them would put midnight on the right and call it a translation.
+The charts and the globe do not mirror under RTL. A time axis running 00 to 23
+and a temperature axis running cold to hot are not script; flipping them would
+put midnight on the right and call it a translation.
 
-### One fault the tests found about the tests
-
-Node 22 exposes the machine's locale as `navigator.language`. On this machine
-that is `de-DE`, so the smoke test rendered the entire page in German and
-failed on assertions about English copy — while a GitHub runner reports
-`en-US` and would have passed. A test whose result depends on the developer's
-operating system is not a test. It pins the language explicitly now.
+The German text says *du*, not *Sie*. The page's own risk table says its
+readers are over 65, over 75, pregnant, on medication — a group German health
+writing usually addresses formally. It says *du* anyway, because the
+instructions are short imperatives ("Geh da raus") and the German formal
+imperative turns those into something a public authority would send you in the
+post, at exactly the moment the sentence needs to be urgent. That is a
+judgement call and a native speaker may overrule it; it is one search-and-
+replace away.
 
 ## Honest limits
 

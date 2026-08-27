@@ -81,7 +81,12 @@ export const es = {
     sourceDaily: 'mínimas diarias',
     sourcePast: 'últimos 7 días',
 
-    peakOffsetTitle: 'La peor hora llega {hours} h {direction} que la más calurosa',
+    peakOffsetTitle: {
+      _count: 'hours',
+      one: 'La peor hora llega una hora {direction} que la más calurosa',
+      many: 'La peor hora llega {hours} horas {direction} que la más calurosa',
+      other: 'La peor hora llega {hours} horas {direction} que la más calurosa',
+    },
     peakEarlier: 'antes',
     peakLater: 'después',
     peakOffsetDetail:
@@ -93,12 +98,28 @@ export const es = {
       'Hoy la hora más calurosa y la más peligrosa caen ambas a las {hour}. Es la excepción, ' +
       'no la regla.',
 
-    nightsTitle: '{current} noche(s) sin alivio',
-    nightsMore: ', vienen {ahead} más',
+    nightsTitle: {
+      _count: 'current',
+      one: 'Una noche sin alivio',
+      many: '{current} noches sin alivio',
+      other: '{current} noches sin alivio',
+    },
+    nightsMore: {
+      _count: 'ahead',
+      one: ', y viene una más',
+      many: ', y vienen {ahead} más',
+      other: ', y vienen {ahead} más',
+    },
     nightsDetail:
       'La noche es cuando el cuerpo descarga el calor acumulado durante el día. Por encima de ' +
-      '{threshold} °C deja de hacerlo. El daño de una ola de calor se acumula en el tercer y ' +
+      '{threshold} °C deja de hacerlo. El daño de una ola de calor se acumula al tercer y ' +
       'cuarto día, y esta racha dura {total}.',
+    nightsRun: {
+      _count: 'total',
+      one: 'una noche',
+      many: '{total} noches',
+      other: '{total} noches',
+    },
     nightsCoolTitle: 'Las noches todavía se enfrían',
     nightsCoolDetail:
       'Todas las noches de este periodo bajan de {threshold} °C, así que el cuerpo tiene su ' +
@@ -111,14 +132,14 @@ export const es = {
       'aclimatadas sudan antes y pierden menos sal al hacerlo.',
     unacclimatisedTitle: 'Hace {difference} °C más que cualquier día de la semana pasada',
     unacclimatisedDetail:
-      'Hoy se llega a {today} °C; el día más cálido de los últimos {days} fue de {recent} °C. ' +
+      'Hoy se llega a {today} °C; el día más cálido de los últimos {days} días fue de {recent} °C. ' +
       'La aclimatación tarda una o dos semanas, y por eso la primera ola de calor de un verano ' +
       'es sistemáticamente la más peligrosa — con temperaturas que esas mismas personas ' +
       'ignorarán en agosto.',
   },
 
   chart: {
-    heading: 'Dónde te coloca este aire',
+    heading: 'Qué te hace este aire',
     sub: 'Arrastra el punto o usa los campos. Cada línea sale de la misma física que las cifras de al lado.',
     tempLabel: 'Temperatura del aire',
     humidityLabel: 'Humedad relativa',
@@ -165,13 +186,13 @@ export const es = {
     safe: 'Cómodo',
     safeHeadline: 'Tu cuerpo tiene margen de sobra aquí.',
     watch: 'Para vigilar',
-    watchHeadline: 'Llevadero, pero es el día que hay que planificar.',
+    watchHeadline: 'Llevadero, pero es el día en torno al cual conviene organizar el resto.',
     strain: 'Esfuerzo real',
     strainHeadline: 'Tu cuerpo trabaja para mantenerse fresco y va perdiendo terreno poco a poco.',
     danger: 'Peligroso',
     dangerHeadline: 'Con condiciones así aparecen las enfermedades por calor.',
     critical: 'Más allá del límite',
-    criticalHeadline: 'A este aire un cuerpo ya no puede ceder calor. Sal de él.',
+    criticalHeadline: 'A este aire un cuerpo ya no puede cederle calor. Sal de ahí.',
   },
 
   who: {
@@ -187,10 +208,21 @@ export const es = {
     noneSelectedBefore: 'Nada seleccionado — las cifras de arriba describen a un',
     noneSelectedTerm: 'adulto joven, sano y aclimatado sentado a la sombra',
     noneSelectedAfter: '. En ellos se midieron los límites publicados.',
-    selected:
-      '{count} factor(es) seleccionado(s). El umbral baja {shift} °C de bulbo húmedo, hasta ' +
-      '{threshold} °C. Cada factor adicional cuenta menos que el anterior — tres factores de ' +
-      'riesgo no hacen a nadie tres veces más frágil.',
+    selected: {
+      _count: 'count',
+      one:
+        'Un factor seleccionado. El umbral baja {shift} °C de bulbo húmedo, hasta ' +
+        '{threshold} °C. Cada factor adicional contaría menos que el anterior: tres factores ' +
+        'de riesgo no hacen a nadie tres veces más frágil.',
+      many:
+        '{count} factores seleccionados. El umbral baja {shift} °C de bulbo húmedo, hasta ' +
+        '{threshold} °C. Cada factor adicional cuenta menos que el anterior: tres factores de ' +
+        'riesgo no hacen a nadie tres veces más frágil.',
+      other:
+        '{count} factores seleccionados. El umbral baja {shift} °C de bulbo húmedo, hasta ' +
+        '{threshold} °C. Cada factor adicional cuenta menos que el anterior: tres factores de ' +
+        'riesgo no hacen a nadie tres veces más frágil.',
+    },
   },
 
   factors: {
@@ -238,49 +270,49 @@ export const es = {
 
     leaveTitle: 'Ve a un aire más fresco ahora',
     leaveDetail:
-      'No sombra, no un ventilador — aire realmente más fresco. Un edificio público, un centro ' +
-      'comercial, un sótano, un coche con aire acondicionado. Con este aire, quedarse y aguantar ' +
-      'no es una de las opciones.',
+      'Ni sombra ni ventilador: aire de verdad más fresco. Un edificio público, un centro ' +
+      'comercial, un sótano, un coche con aire acondicionado. Con este aire, quedarse y ' +
+      'aguantar no es una opción.',
     fanOffTitle: 'Apaga el ventilador',
     fanOffDetail:
-      '{reason}. Mójate la piel en su lugar — un paño húmedo o un pulverizador hacen la ' +
-      'evaporación que tu sudor ya no alcanza a hacer.',
+      '{reason}. En vez de eso, mójate la piel: un paño húmedo o un pulverizador hacen la ' +
+      'evaporación que tu sudor ya no da abasto para hacer.',
     fanOnTitle: 'Aquí un ventilador ayuda',
     fanOnDetail:
-      'Apúntalo hacia ti, no hacia la habitación — el enfriamiento viene del aire moviéndose ' +
-      'sobre la piel. El consejo habitual dice apagar los ventiladores por encima de 35 °C; con ' +
-      'aire tan húmedo ese consejo está al revés.',
+      'Apúntalo hacia ti, no hacia la habitación: el frescor viene del aire que corre sobre la ' +
+      'piel. El consejo de siempre dice apagar los ventiladores por encima de 35 °C; con aire ' +
+      'tan húmedo ese consejo está justo al revés.',
     wetSkinTitle: 'Mójate la piel',
     wetSkinDetail:
       'Un paño húmedo en el cuello, los antebrazos y la cara, o un pulverizador. Esto funciona ' +
-      'cuando ya nada más funciona, porque añade la evaporación para la que tu cuerpo ya no ' +
-      'tiene sudor. Además es lo más barato de esta lista.',
+      'cuando ya no funciona nada más, porque aporta la evaporación para la que tu cuerpo ya ' +
+      'no tiene sudor. Y además es lo más barato de esta lista.',
     shadeTitle: 'Da sombra a las ventanas desde fuera',
     shadeDetail:
       'Contraventanas, toldos, incluso una sábana colgada fuera detienen unas cinco veces más ' +
       'calor que una persiana por dentro. Una vez que la luz atraviesa el cristal el calor ya ' +
       'está en la habitación y las cortinas solo lo ocultan.',
-    stopWorkTitle: 'Para el trabajo físico',
+    stopWorkTitle: 'Deja el trabajo físico',
     stopWorkDetail:
-      'Todos los límites de supervivencia publicados suponen a alguien sentado sin moverse. El ' +
-      'músculo en trabajo produce hasta diez veces el calor del reposo, y es la única variable ' +
-      'de aquí que controlas por completo.',
-    checkInTitle: 'Que alguien quede en comprobar cómo estás',
+      'Todos los límites de supervivencia publicados dan por hecho que la persona está sentada ' +
+      'sin moverse. Un músculo que trabaja produce hasta diez veces el calor del reposo, y es ' +
+      'lo único de esta página que controlas del todo.',
+    checkInTitle: 'Queda con alguien en que te llame',
     checkInDetail:
-      'El golpe de calor quita justo el juicio necesario para reconocerlo. Una llamada a una ' +
-      'hora fija protege mejor que cualquier plan propio de vigilarse a uno mismo.',
+      'El golpe de calor quita justo el juicio que haría falta para reconocerlo. Una llamada a ' +
+      'una hora fija protege más que cualquier propósito de vigilarte tú mismo.',
     drinkTitle: 'Bebe por horario, no por sed',
     drinkDetail:
       'La sed es una señal poco fiable en este grupo, y cuando llega el déficit ya está ahí. Un ' +
       'vaso cada hora, apetezca o no.',
     pharmacistTitle: 'Pregunta en la farmacia por tu medicación y el calor',
     pharmacistDetail:
-      'Algunos medicamentos suprimen la sudoración por completo. No dejes nada por tu cuenta — ' +
-      'pero en la farmacia te dicen en dos minutos si el tuyo está en esa lista, y eso cambia ' +
-      'cuánto cuidado hace falta hoy.',
+      'Algunos medicamentos suprimen la sudoración por completo. No dejes ningún tratamiento ' +
+      'por tu cuenta, pero en la farmacia te dicen en dos minutos si el tuyo está en esa ' +
+      'lista, y de eso depende cuánto cuidado hace falta hoy.',
     ventilateTitle: 'Abre solo cuando fuera esté más fresco que dentro',
     ventilateDetail:
-      'La regla que casi todos hacen mal. Una ventana abierta por la tarde es una fuente de ' +
+      'La regla que casi todo el mundo aplica al revés. Una ventana abierta por la tarde es una fuente de ' +
       'calor. Todo cerrado durante el día, y abierto de par en par en cuanto la temperatura ' +
       'exterior baje de la interior, normalmente al final de la tarde.',
     emergencyTitle: 'Conoce la señal que lo cambia todo',
@@ -318,7 +350,12 @@ export const es = {
     nightTooltip: '{date}: mínima {low}',
     nightTooltipHot: '{date}: mínima {low} — sin alivio',
     unknown: 'desconocida',
-    nightsAria: '{count} noches seguidas sin alivio en este periodo.',
+    nightsAria: {
+      _count: 'count',
+      one: 'Una noche sin alivio en este periodo.',
+      many: '{count} noches seguidas sin alivio en este periodo.',
+      other: '{count} noches seguidas sin alivio en este periodo.',
+    },
     notEnough: 'datos insuficientes',
     legendOutdoors: 'exterior (modelado)',
     legendIndoors: 'interior (modelado)',
@@ -370,7 +407,12 @@ export const es = {
     band6: '≥ 31°',
     band6Note: 'por encima, en una estación cálida normal',
     bandEmpty: '{note} — ninguna celda aquí',
-    factHotCellsTitle: '{count} de {total} celdas de tierra superan los 26 °C',
+    factHotCellsTitle: {
+      _count: 'count',
+      one: 'Una de {total} celdas de tierra supera los 26 °C',
+      many: '{count} de {total} celdas de tierra superan los 26 °C',
+      other: '{count} de {total} celdas de tierra superan los 26 °C',
+    },
     factHotCellsDetail:
       'y no están dispersas: el delta del Ganges, el Punyab, la Llanura del Norte de China, el ' +
       'Golfo. Aproximadamente una quinta parte de la humanidad vive dentro de ese puñado de ' +
