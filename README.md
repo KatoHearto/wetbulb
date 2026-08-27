@@ -411,6 +411,66 @@ flagged `ae|oe|ue` anywhere and produced 17 false alarms in one run
 is full of legitimate *au-e* and *qu-e*. A green result there means "none of
 the usual suspects", not "no transliteration anywhere".
 
+### Five native-speaker reviews, and what only a fresh reader could find
+
+A reader looked at the German and said `who.heading` — "Wer in dieser Luft ist" —
+reads like a word-for-word rendering of "Who is in this air". He was right, and
+the reason I had not caught it is structural rather than careless: **I wrote
+those sentences.** My check ran against the same instinct that produced them.
+The measurable things I did find — umlauts, plural categories, punctuation
+widths. Word order I could not, because word order was the thing I got wrong.
+
+So each language got a fresh reviewer, briefed as a specialist in that language
+and in translation criticism, reading the English source beside the target and
+returning findings with finished replacements. **420 changes across five
+bundles**, plus a dash pass over German.
+
+**The findings that were not about style:**
+
+| | | |
+|---|---|---|
+| `ar` | `peakOffsetTitle` had **"بعد" (after) fixed in the sentence**, then filled `{direction}` with "قبل" (before) | every earlier-peak read *"comes one hour after before the hottest hour"* — the time direction inverted |
+| `fr` | `actions.emergencyDetail`: "refroidissez la personne" | *refroidir quelqu'un* is French slang for **killing** them. On the resuscitation line |
+| `fr` | `masthead.privacyBefore`: "vos coordonnées" | means **name, address, phone number** in everyday French — in the privacy sentence, promising the opposite |
+| `fr` | `measures.appliancesDetail`: "veilleuses" | means **children's night lights**, not appliance standby LEDs — the advice became inapplicable |
+| `hi` | `meta.title`: "ठंडा होना" of a person | means **calming down**; "ठंडा पड़ना" means dying. In the page title |
+| `hi` | `factors.diabetesWhy` | subject and object had swapped: the sentence said *sweating* weakens something |
+| `ar` | `factors.aloneWhy`: "ضربة الشمس" (sunstroke) | the page's own text says most deaths happen **indoors, out of the sun**. The reviewer caught the self-contradiction, not just the term |
+| `es` | "tiempo real", three times | reads as **real time**, not "real weather" — including the privacy line |
+| `de` | `presets.indoorsNote`: "wo die meisten Hitzetoten sterben" | a *Hitzetoter* is already dead. The sentence said where dead people die |
+
+**Two corrections of my own corrections.** Last round I "fixed" `chart.heading`
+away from "Où cet air vous place" / "Dónde te coloca este aire", because
+*placer/colocar* looked like a calque. All three reviewers put it back, with an
+argument I did not have: the heading sits over a **position** diagram
+(temperature against humidity, with a point labelled "you"), and "what this air
+does to you" promises physiology the chart does not show. My first draft was
+right and my fix was the error. And I had changed German "echtes Wetter" to
+"echte Messwerte" — but what is fetched is a **forecast**; the file says so
+itself two keys away. Five keys claimed a data quality the tool does not have,
+including the privacy sentence.
+
+**A reviewer who corrected himself, twice.** The German reviewer's first pass
+flagged the imperative forms "Richte", "Öffne", "Verabrede" as inconsistent
+shortenings. In his second pass he withdrew it: German stems ending in -d, -t
+or consonant+n take the -e **obligatorily**. Had I applied his first finding, he
+would have dictated grammatical errors into the file. He also retracted his own
+praise for `chart.heading` once the other two reviewers contradicted him —
+"I checked the heading against the original and never checked what stands under
+it, which is exactly the fault I criticise in translators."
+
+**How the findings were applied.** Not by hand. A checker resolves each dotted
+key down through its sections — `heading:` alone occurs eight times per file —
+finds the source block, and refuses the whole batch, writing nothing, if any
+proposal drops a `{placeholder}`, matches no unique block, or changes nothing.
+It refused four times during this round, each time correctly.
+
+The German dash pass ran separately, and only over `U+2014`: the minus sign in
+the readout (`U+2212`) and the hyphens in "Höchst- und", "Herz- oder",
+"Standby-Lämpchen" are different characters and had to survive. 47 replaced, 2
+minus signs and 3 hyphens untouched, the numeric ranges (`22–25°`) already
+correct and left alone. Both facts now have tests.
+
 ### What is deliberately not translated
 
 The charts and the globe do not mirror under RTL. A time axis running 00 to 23

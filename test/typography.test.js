@@ -108,6 +108,29 @@ describe('German spelling', () => {
     assert.deepEqual(offenders, [], offenders.join(', '));
   });
 
+  it('uses the en dash, not the English em dash', () => {
+    // The German dash is U+2013. The file used U+2014 in 47 values -- English
+    // typography carried over character for character. The tell the reviewer
+    // noticed: it DID use U+2013, but only in numeric ranges (22-25 degrees),
+    // which is exactly what English does.
+    //
+    // Only U+2014 is checked. The minus sign (U+2212) in the readout and the
+    // hyphens in "Hoechst- und", "Herz- oder", "Standby-Laempchen" are
+    // different characters and must survive any pass over this file.
+    const offenders = everyString('de')
+      .filter(([, text]) => text.includes('—'))
+      .map(([key]) => key);
+    assert.deepEqual(offenders, [], `em dash in: ${offenders.join(', ')}`);
+  });
+
+  it('keeps the minus sign and the hyphens it needs', () => {
+    const get = (key) => key.split('.').reduce((o, p) => o?.[p], BUNDLES.de);
+    assert.ok(get('readout.sourceShifted').includes('−'), 'minus sign lost');
+    assert.ok(get('readout.sourceMargin').includes('−'), 'minus sign lost');
+    assert.ok(get('factors.cardiovascular').includes('Herz-'), 'hyphen lost');
+    assert.ok(get('globe.band2').includes('–'), 'range dash lost');
+  });
+
   it('addresses the reader as du throughout, never switching to Sie', () => {
     // Mixing the two is the single most obvious tell in German. The page is
     // a tool, not a letter from an office, so it says du — and must keep
