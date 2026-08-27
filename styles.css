@@ -126,8 +126,8 @@ body {
 .blurb strong { color: var(--warm); font-weight: 600; }
 
 .masthead-note {
-  border-left: 2px solid var(--line-bright);
-  padding-left: var(--s4);
+  border-inline-start: 2px solid var(--line-bright);
+  padding-inline-start: var(--s4);
   font-size: 0.9rem;
   color: var(--ink-soft);
 }
@@ -251,7 +251,7 @@ main { padding: var(--s6) var(--s5) var(--s6); }
 
 /* ------------------------------------------------------------ readout ---- */
 
-.readout { border-left: 2px solid var(--line-bright); padding-left: var(--s4); }
+.readout { border-inline-start: 2px solid var(--line-bright); padding-inline-start: var(--s4); }
 
 .readout-verdict { margin: 0 0 var(--s4); }
 .readout-band {
@@ -274,20 +274,20 @@ main { padding: var(--s6) var(--s5) var(--s6); }
 /* A readout of several facts is a table, not a stack of sentences. */
 .readout-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
 .readout-table th,
-.readout-table td { padding: var(--s2) 0; border-bottom: 1px solid var(--line); text-align: left; }
+.readout-table td { padding: var(--s2) 0; border-bottom: 1px solid var(--line); text-align: start; }
 .readout-table th { font-weight: 400; color: var(--ink-soft); }
 .readout-table td.value {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  text-align: end;
   white-space: nowrap;
 }
 .readout-table td.source {
   font-family: var(--mono);
   font-size: 0.7rem;
   color: var(--ink-faint);
-  text-align: right;
-  padding-left: var(--s3);
+  text-align: end;
+  padding-inline-start: var(--s3);
   white-space: nowrap;
 }
 
@@ -487,7 +487,7 @@ button.preset[aria-pressed="true"] { color: var(--accent); border-color: var(--a
 }
 @media (max-width: 56rem) { .day-layout { grid-template-columns: 1fr; } }
 
-.day-side { border-left: 2px solid var(--line-bright); padding-left: var(--s4); }
+.day-side { border-inline-start: 2px solid var(--line-bright); padding-inline-start: var(--s4); }
 .window-summary { margin: 0 0 var(--s5); font-size: 0.95rem; line-height: 1.5; }
 .window-summary strong { color: var(--accent); font-family: var(--mono); }
 
@@ -598,15 +598,15 @@ input[type="text"]::placeholder { color: var(--ink-faint); }
 
 .where-status {
   min-height: 3rem;
-  padding-left: var(--s4);
-  border-left: 2px solid var(--line-bright);
+  padding-inline-start: var(--s4);
+  border-inline-start: 2px solid var(--line-bright);
   font-size: 0.9rem;
   color: var(--ink-soft);
 }
-.where-status:empty { border-left-color: transparent; }
-.where-ok { border-left-color: var(--cool); }
-.where-error { border-left-color: var(--hot); color: var(--hot); }
-.where-busy { border-left-color: var(--temperate); }
+.where-status:empty { border-inline-start-color: transparent; }
+.where-ok { border-inline-start-color: var(--cool); }
+.where-error { border-inline-start-color: var(--hot); color: var(--hot); }
+.where-busy { border-inline-start-color: var(--temperate); }
 .where-detail {
   display: block;
   margin-top: var(--s1);
@@ -735,7 +735,7 @@ input[type="text"]::placeholder { color: var(--ink-faint); }
 
 .globe-facts { display: grid; gap: var(--s3); }
 
-.globe-fact { border-left: 2px solid var(--line-bright); padding-left: var(--s3); }
+.globe-fact { border-inline-start: 2px solid var(--line-bright); padding-inline-start: var(--s3); }
 .globe-fact-title {
   margin: 0 0 2px;
   font-family: var(--mono);
@@ -746,3 +746,87 @@ input[type="text"]::placeholder { color: var(--ink-faint); }
 
 .globe-key-empty { opacity: 0.42; }
 .globe-key-empty .globe-swatch { outline: 1px dashed var(--line-bright); outline-offset: -1px; }
+
+/* ===================== LANGUAGE ===================== */
+
+.language-bar {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 24px;
+}
+
+.language-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.language-select {
+  appearance: none;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line-bright);
+  border-radius: 0;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.language-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* The warning is the one piece of chrome that is allowed to interrupt: it
+   qualifies every safety instruction on the page below it. Hairline on the
+   leading edge rather than a filled box -- loud enough to read, quiet enough
+   not to be mistaken for the heat warning this tool is actually about. */
+.language-warning {
+  flex: 1 1 320px;
+  margin: 0;
+  padding-inline-start: 12px;
+  border-inline-start: 2px solid var(--warm);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.language-warning strong {
+  display: block;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.language-warning a {
+  color: var(--ink-soft);
+}
+
+/* ---- right-to-left ----
+   The page mirrors; the instruments do not. A time axis running 00 to 23 and
+   a temperature axis running cold to hot are not script, and flipping them
+   would put midnight on the right and call it a translation. */
+[dir='rtl'] .wb-chart-svg,
+[dir='rtl'] .globe-canvas,
+[dir='rtl'] .weight-bar,
+[dir='rtl'] .margin-bar {
+  direction: ltr;
+}
+
+/* The readout table stays right-to-left -- label on the right, value on the
+   left is what an Arabic reader expects. Forcing the TABLE to ltr was the
+   first attempt and it glued every value to its label; what actually needed
+   protecting was each number-plus-unit, which the bidi algorithm reorders
+   into "C° 32.0" unless it is isolated from the text around it. */
+[dir='rtl'] .readout-table .value,
+[dir='rtl'] .control-value,
+[dir='rtl'] .factor-shift,
+[dir='rtl'] .weight-value,
+[dir='rtl'] .globe-note {
+  unicode-bidi: isolate;
+}

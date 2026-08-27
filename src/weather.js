@@ -40,19 +40,18 @@ export const ERRORS = {
  * the user nothing about whether to retry, move, or give up and use the
  * sliders.
  */
-export const ERROR_TEXT = {
-  [ERRORS.OFFLINE]: 'No connection. The sliders still work — this tool never needed the network.',
-  [ERRORS.TIMEOUT]: 'The weather service did not answer in time. Try again, or use the sliders.',
-  [ERRORS.DENIED]: 'Location permission was declined. Search for a place instead, or set the sliders.',
-  [ERRORS.UNSUPPORTED]: 'This browser will not share a location. Search for a place instead.',
-  [ERRORS.NOT_FOUND]: 'No place by that name. Try a larger town nearby.',
-  [ERRORS.SERVER]: 'The weather service returned an error. Not something you can fix — try later.',
-  [ERRORS.MALFORMED]: 'The weather service answered with something this app cannot read.',
-};
+/**
+ * A thrown error carries its `kind`, and the page looks the sentence up.
+ *
+ * The English text used to live here. It moved because an error message is the
+ * one string a user is guaranteed to read at their least patient moment, and
+ * shipping it in one language while the rest of the page speaks another is
+ * exactly where a translation gap becomes visible.
+ */
 
 export class WeatherError extends Error {
   constructor(kind, cause) {
-    super(ERROR_TEXT[kind] ?? 'Something went wrong fetching the weather.');
+    super(kind);
     this.kind = kind;
     this.cause = cause;
   }

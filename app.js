@@ -1,4 +1,6 @@
 import * as chart from './src/chart.js';
+import { currentInfo, initLanguage, n, onLanguageChange, setLanguage, t } from './src/i18n/index.js';
+import { DEFAULT_LANGUAGE, LANGUAGES } from './src/i18n/core.js';
 import * as dayChart from './src/daychart.js';
 import * as dayView from './src/dayview.js';
 import { LEGEND as GLOBE_LEGEND, colourFor, createGlobe } from './src/globe.js';
@@ -24,6 +26,25 @@ const escape = (text) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
   );
 
+
+/**
+ * A temperature, in the reader's numerals and the reader's unit.
+ *
+ * Arabic writes the degree sign with its own letter (°م), and Intl gives the
+ * decimal separator its locale's form. Neither survives being typed into a
+ * template literal, which is what this replaced.
+ */
+const degrees = (value, digits) => `${n(value, digits)} ${t('units.celsius')}`;
+
+/**
+ * A number with its unit, for the bolding pass.
+ *
+ * Matching a literal "°C" stopped working the moment the unit became a
+ * translation; this matches a run of digits followed by any non-space unit,
+ * which holds for °C and °م alike.
+ */
+const NUMBER_WITH_UNIT = /(\d[\d.,\u0660-\u0669]*\s*°\S*)/g;
+
 const state = {
   celsius: 32,
   humidity: 60,
@@ -46,24 +67,26 @@ function buildPresets() {
   $('presets').innerHTML = PRESETS.map(
     (preset) =>
       `<button type="button" class="preset" data-preset="${escape(preset.id)}" ` +
-      `aria-pressed="false" title="${escape(preset.note)}">${escape(preset.label)}</button>`
+      `aria-pressed="false" title="${escape(t(`presets.${preset.id}Note`))}">` +
+      `${escape(t(`presets.${preset.id}`))}</button>`
   ).join('');
 }
 
 function buildFactors() {
   $('factors').innerHTML = GROUPS.map((group) => {
-    const rows = FACTORS.filter((factor) => factor.group === group.id)
+    const rows = FACTORS.filter((factor) => factor.group === group)
       .map(
         (factor) =>
           `<label class="factor">` +
           `<input type="checkbox" data-factor="${escape(factor.id)}">` +
-          `<span class="factor-label">${escape(factor.label)}</span>` +
-          `<span class="factor-shift">−${factor.shift.toFixed(1)}°</span>` +
-          `<span class="factor-why">${escape(factor.why)}</span>` +
+          `<span class="factor-label">${escape(t(`factors.${factor.id}`))}</span>` +
+          `<span class="factor-shift">−${n(factor.shift, 1)}°</span>` +
+          `<span class="factor-why">${escape(t(`factors.${factor.id}Why`))}</span>` +
           `</label>`
       )
       .join('');
-    return `<div class="factor-group"><h3>${escape(group.label)}</h3>${rows}</div>`;
+    const heading = t(`who.group${group[0].toUpperCase()}${group.slice(1)}`);
+    return `<div class="factor-group"><h3>${escape(heading)}</h3>${rows}</div>`;
   }).join('');
 }
 
@@ -73,8 +96,8 @@ function buildBuildings() {
       `<label>` +
       `<input type="radio" name="building" value="${escape(building.id)}"` +
       `${building.id === state.building ? ' checked' : ''}>` +
-      `<span>${escape(building.label)}</span>` +
-      `<span class="building-note">${escape(building.note)}</span>` +
+      `<span>${escape(t(`buildings.${building.id}`))}</span>` +
+      `<span class="building-note">${escape(t(`buildings.${building.id}Note`))}</span>` +
       `</label>`
   ).join('');
 }
@@ -89,33 +112,37 @@ function buildMeasures() {
         `<div class="measure">` +
         `<div class="measure-weight">` +
         `<div class="weight-bar"><div class="weight-fill" style="width:${(100 * measure.effect) / top}%"></div></div>` +
-        `<span class="weight-value">${measure.effect}× worth</span>` +
+        `<span class="weight-value">${escape(t('measures.worth', { value: measure.effect }))}</span>` +
         `</div>` +
-        `<div><p class="measure-title">${escape(measure.label)}</p>` +
-        `<p class="measure-detail">${escape(measure.detail)}</p></div>` +
+        `<div><p class="measure-title">${escape(t(`measures.${measure.id}`))}</p>` +
+        `<p class="measure-detail">${escape(t(`measures.${measure.id}Detail`))}</p></div>` +
         `</div>`
     )
     .join('');
 }
 
-const LEGEND = [
-  { key: 'measured', text: `${WET_BULB_LIMITS.measuredYoungHealthy}° measured` },
-  { key: 'theoretical', text: `${WET_BULB_LIMITS.theoretical}° theoretical` },
-  { key: 'personal', text: 'yours' },
-  { key: 'fan', text: 'no fan' },
-  { key: 'iso', text: 'wet bulb' },
-];
+function chartLegend() {
+  return [
+    { key: 'measured', text: t('chart.legendMeasured', { value: WET_BULB_LIMITS.measuredYoungHealthy }) },
+    { key: 'theoretical', text: t('chart.legendTheoretical', { value: WET_BULB_LIMITS.theoretical }) },
+    { key: 'personal', text: t('chart.legendYours') },
+    { key: 'fan', text: t('chart.legendNoFan') },
+    { key: 'iso', text: t('chart.legendIsopleth') },
+  ];
+}
 
 function buildLegend() {
-  $('chart-legend').innerHTML = LEGEND.map(
-    (entry) =>
-      `<span class="legend-key"><span class="legend-swatch ${entry.key}"></span>${escape(entry.text)}</span>`
-  ).join('');
+  $('chart-legend').innerHTML = chartLegend()
+    .map(
+      (entry) =>
+        `<span class="legend-key"><span class="legend-swatch ${entry.key}"></span>${escape(entry.text)}</span>`
+    )
+    .join('');
 
   $('day-legend').innerHTML =
-    `<span class="legend-key"><span class="legend-swatch" style="border-color:var(--warm);border-top-style:dashed"></span>outdoors (modelled)</span>` +
-    `<span class="legend-key"><span class="legend-swatch" style="border-color:var(--cool);border-top-style:dashed"></span>indoors (modelled)</span>` +
-    `<span class="legend-key"><span class="legend-swatch" style="border-top-width:8px;border-color:color-mix(in srgb, var(--cool) 30%, transparent)"></span>worth opening up</span>`;
+    `<span class="legend-key"><span class="legend-swatch" style="border-color:var(--warm);border-top-style:dashed"></span>${escape(t('day.legendOutdoors'))}</span>` +
+    `<span class="legend-key"><span class="legend-swatch" style="border-color:var(--cool);border-top-style:dashed"></span>${escape(t('day.legendIndoors'))}</span>` +
+    `<span class="legend-key"><span class="legend-swatch" style="border-top-width:8px;border-color:color-mix(in srgb, var(--cool) 30%, transparent)"></span>${escape(t('day.legendWindow'))}</span>`;
 }
 
 // -------------------------------------------------------------- readout ----
@@ -138,19 +165,23 @@ function renderReadout() {
 
   const marginText =
     result.margin >= 0
-      ? `${result.margin.toFixed(1)} °C left`
-      : `${Math.abs(result.margin).toFixed(1)} °C past`;
+      ? t('readout.marginLeft', { value: n(result.margin, 1) })
+      : t('readout.marginPast', { value: n(Math.abs(result.margin), 1) });
 
-  const fanText = { helps: 'helps', marginal: 'barely', harmful: 'makes it worse' }[fan.verdict];
+  const fanText = t(`readout.fan${fan.verdict[0].toUpperCase()}${fan.verdict.slice(1)}`);
 
   const table =
     `<table class="readout-table">` +
-    row('Wet-bulb temperature', `${result.wetBulb.toFixed(1)} °C`, 'Stull 2011', true) +
-    row('Your threshold', `${result.threshold.toFixed(1)} °C`, result.shift > 0 ? `−${result.shift.toFixed(1)} shifted` : 'reference') +
-    row('Margin', marginText, 'threshold − wet bulb') +
-    row('A fan here', fanText, 'heat balance') +
-    row('Heat index', `${heatIndex(state.celsius, state.humidity).toFixed(0)} °C`, 'NWS') +
-    row('Dew point', `${dewPoint(state.celsius, state.humidity).toFixed(1)} °C`, 'Magnus') +
+    row(t('readout.wetBulb'), degrees(result.wetBulb, 1), t('readout.sourceStull'), true) +
+    row(
+      t('readout.threshold'),
+      degrees(result.threshold, 1),
+      result.shift > 0 ? t('readout.sourceShifted', { shift: n(result.shift, 1) }) : t('readout.sourceReference')
+    ) +
+    row(t('readout.margin'), marginText, t('readout.sourceMargin')) +
+    row(t('readout.fan'), fanText, t('readout.sourceBalance')) +
+    row(t('readout.heatIndex'), degrees(heatIndex(state.celsius, state.humidity), 0), t('readout.sourceNWS')) +
+    row(t('readout.dewPoint'), degrees(dewPoint(state.celsius, state.humidity), 1), t('readout.sourceMagnus')) +
     `</table>`;
 
   // The bar reads from a full margin of 12 °C down to zero, so it shrinks as
@@ -160,12 +191,13 @@ function renderReadout() {
   $('readout').className = `readout band-${result.band.id}`;
   $('readout').innerHTML =
     `<div class="readout-verdict">` +
-    `<span class="readout-band">${escape(result.band.label)}</span>` +
-    `<p class="readout-headline">${escape(result.band.headline)}</p>` +
+    `<span class="readout-band">${escape(t(`bands.${result.band.id}`))}</span>` +
+    `<p class="readout-headline">${escape(t(`bands.${result.band.id}Headline`))}</p>` +
     `</div>` +
     table +
     `<div class="margin-bar"><div class="margin-fill" style="width:${fill}%"></div></div>` +
-    `<p class="margin-caption">${escape(accuracy.note)}</p>`;
+    `<p class="margin-caption">` +
+    `${escape(t(`readout.accuracy${accuracy.level[0].toUpperCase()}${accuracy.level.slice(1)}`))}</p>`;
 
   return result;
 }
@@ -176,11 +208,23 @@ function renderActions() {
     .map(
       (entry) =>
         `<li class="tone-${escape(entry.tone)}">` +
-        `<div><p class="action-title">${escape(entry.title)}</p>` +
-        `<p class="action-detail">${escape(entry.detail)}</p></div>` +
+        `<div><p class="action-title">${escape(t(`actions.${entry.id}Title`))}</p>` +
+        `<p class="action-detail">${escape(actionDetail(entry))}</p></div>` +
         `</li>`
     )
     .join('');
+}
+
+/**
+ * The fan entry is the one action whose detail quotes a reason, and the reason
+ * is a verdict id rather than a sentence -- so it is looked up here and passed
+ * in as a value. Every other action's detail needs nothing.
+ */
+function actionDetail(entry) {
+  if (!entry.values?.reason) return t(`actions.${entry.id}Detail`);
+  const verdict = entry.values.reason;
+  const reason = t(`actions.fanReason${verdict[0].toUpperCase()}${verdict.slice(1)}`);
+  return t(`actions.${entry.id}Detail`, { reason });
 }
 
 function renderShiftSummary() {
@@ -189,18 +233,21 @@ function renderShiftSummary() {
 
   if (factorIds.length === 0) {
     $('shift-summary').innerHTML =
-      'Nothing selected — the numbers above describe a <strong>young, healthy, ' +
-      'acclimatised adult sitting still in the shade</strong>. That is who the ' +
-      'published limits were measured on.';
+      escape(t('who.noneSelectedBefore')) +
+      ` <strong>${escape(t('who.noneSelectedTerm'))}</strong>` +
+      escape(t('who.noneSelectedAfter'));
     return;
   }
 
-  $('shift-summary').innerHTML =
-    `${factorIds.length} factor${factorIds.length === 1 ? '' : 's'} selected. ` +
-    `Threshold moved down by <strong>${result.shift.toFixed(1)} °C</strong> of wet bulb, ` +
-    `to <strong>${result.threshold.toFixed(1)} °C</strong>. ` +
-    `Each further factor counts for less than the last — three risk factors do not ` +
-    `make someone three times as fragile.`;
+  // The two numbers are bolded after escaping, so a translation cannot inject
+  // markup and cannot lose the emphasis either: the placeholders carry it.
+  $('shift-summary').innerHTML = escape(
+    t('who.selected', {
+      count: factorIds.length,
+      shift: n(result.shift, 1),
+      threshold: n(result.threshold, 1),
+    })
+  ).replace(NUMBER_WITH_UNIT, '<strong>$1</strong>');
 }
 
 function renderDay(threshold) {
@@ -214,31 +261,47 @@ function renderDay(threshold) {
       dayView.renderDay(todayHours, { threshold, ventilation, nowHour: hour }) +
       dayView.renderNights(nights);
 
-    $('day-sub').innerHTML =
-      'Measured hourly values for this place. The <strong>large marker</strong> is ' +
-      'the most dangerous hour, the small one the hottest — they are rarely the ' +
-      'same hour, and the gap is the reason this tool exists.';
-
-    $('window-summary').innerHTML = ventilation.any
-      ? escape(ventilation.summary).replace(/(\d{2}:00)/g, '<strong>$1</strong>')
-      : escape(ventilation.summary ?? 'Not enough hourly data to judge ventilation.');
+    $('day-sub').innerHTML = escape(t('day.subMeasured'));
+    $('window-summary').innerHTML = windowSentence(ventilation);
     $('day-legend').innerHTML = measuredLegend();
     return;
   }
 
+  $('day-sub').innerHTML = escape(t('day.subModelled'));
   const result = dayChart.render(state.low, state.high, state.building, hour);
   $('day-chart').innerHTML = result.svg;
-  $('window-summary').innerHTML = result.window.any
-    ? escape(result.window.summary).replace(/(\d{2}:00)/g, '<strong>$1</strong>')
-    : escape(result.window.summary);
+  $('window-summary').innerHTML = windowSentence(result.window);
+}
+
+const hhmm = (hour) => `${String(hour % 24).padStart(2, '0')}:00`;
+
+/**
+ * The ventilation sentence, built from the four numbers the model returns.
+ *
+ * Composing it here rather than in `forecast.js` is what lets it exist in six
+ * languages: the module that decides *when* to open a window has no opinion
+ * about what language to say it in.
+ */
+function windowSentence(ventilation) {
+  if (!ventilation) return escape(t('day.windowInsufficient'));
+  if (!ventilation.any) return escape(t('day.windowNone'));
+
+  return escape(
+    t('day.windowSummary', {
+      opens: hhmm(ventilation.opensAt),
+      closes: hhmm(ventilation.closesAt + 1),
+      best: hhmm(ventilation.bestHour),
+      gain: n(ventilation.bestGain, 1),
+    })
+  ).replace(/(\d{2}:00)/g, '<strong>$1</strong>');
 }
 
 function measuredLegend() {
   return (
-    '<span class="legend-key"><span class="legend-swatch" style="border-color:var(--hot);border-top-width:2px"></span>wet bulb (measured)</span>' +
-    '<span class="legend-key"><span class="legend-swatch" style="border-color:var(--warm);border-top-style:dotted"></span>your threshold</span>' +
-    '<span class="legend-key"><span class="legend-swatch" style="border-top-width:8px;border-color:color-mix(in srgb, var(--cool) 30%, transparent)"></span>worth opening up</span>' +
-    '<span class="legend-key"><span class="legend-swatch" style="border-top-width:8px;border-color:color-mix(in srgb, var(--critical) 45%, transparent)"></span>past your threshold</span>'
+    `<span class="legend-key"><span class="legend-swatch" style="border-color:var(--hot);border-top-width:2px"></span>${escape(t('day.legendWetBulb'))}</span>` +
+    `<span class="legend-key"><span class="legend-swatch" style="border-color:var(--warm);border-top-style:dotted"></span>${escape(t('day.legendThreshold'))}</span>` +
+    `<span class="legend-key"><span class="legend-swatch" style="border-top-width:8px;border-color:color-mix(in srgb, var(--cool) 30%, transparent)"></span>${escape(t('day.legendWindow'))}</span>` +
+    `<span class="legend-key"><span class="legend-swatch" style="border-top-width:8px;border-color:color-mix(in srgb, var(--critical) 45%, transparent)"></span>${escape(t('day.legendPast'))}</span>`
   );
 }
 
@@ -264,23 +327,28 @@ function renderFindings() {
 
   // --- 1. the hour that is actually worst ---------------------------------
   if (peak) {
-    const gap = Math.abs(peak.offsetHours);
-    const direction = peak.offsetHours < 0 ? 'earlier' : 'later';
-
     blocks.push(
       finding(
-        peak.coincide ? 'The peaks line up today' : `The worst hour is ${gap} h ${direction} than the hottest`,
         peak.coincide
-          ? `Today the hottest hour and the most dangerous hour both fall at ` +
-            `${hhmm(peak.worst.hour)}. That is the exception, not the rule.`
-          : `The thermometer peaks at ${hhmm(peak.hottest.hour)} with ` +
-            `${peak.hottest.celsius.toFixed(1)} °C. But the air is hardest on a body at ` +
-            `${hhmm(peak.worst.hour)}, when it is ${peak.worst.celsius.toFixed(1)} °C — ` +
-            `${(peak.hottest.celsius - peak.worst.celsius).toFixed(1)} °C cooler and ` +
-            `${peak.worst.humidity} % humid. Wet bulb ${peak.worst.wetBulb.toFixed(1)} ` +
-            `against ${peak.hottest.wetBulb.toFixed(1)}.`,
+          ? t('findings.peakSameTitle')
+          : t('findings.peakOffsetTitle', {
+              hours: Math.abs(peak.offsetHours),
+              direction: t(peak.offsetHours < 0 ? 'findings.peakEarlier' : 'findings.peakLater'),
+            }),
+        peak.coincide
+          ? t('findings.peakSameDetail', { hour: hhmm(peak.worst.hour) })
+          : t('findings.peakOffsetDetail', {
+              hottestHour: hhmm(peak.hottest.hour),
+              hottestTemp: n(peak.hottest.celsius, 1),
+              worstHour: hhmm(peak.worst.hour),
+              worstTemp: n(peak.worst.celsius, 1),
+              difference: n(peak.hottest.celsius - peak.worst.celsius, 1),
+              worstHumidity: n(peak.worst.humidity, 0),
+              worstWet: n(peak.worst.wetBulb, 1),
+              hottestWet: n(peak.hottest.wetBulb, 1),
+            }),
         peak.coincide ? 'flat' : 'strong',
-        'hourly forecast'
+        t('findings.sourceHourly')
       )
     );
   }
@@ -290,25 +358,20 @@ function renderFindings() {
     const total = nights.current + nights.ahead;
     blocks.push(
       finding(
-        `${nights.current} night${nights.current === 1 ? '' : 's'} without relief` +
-          (nights.ahead > 0 ? `, ${nights.ahead} more coming` : ''),
-        `The night is when a body unloads the heat it took on during the day. ` +
-          `Above ${nights.threshold} °C it stops doing that. Heat waves rarely kill ` +
-          `on the first day — they kill on the third and fourth, and this run is ` +
-          `${total} long.`,
+        t('findings.nightsTitle', { current: nights.current }) +
+          (nights.ahead > 0 ? t('findings.nightsMore', { ahead: nights.ahead }) : ''),
+        t('findings.nightsDetail', { threshold: n(nights.threshold, 0), total }),
         total >= 3 ? 'strong' : 'flat',
-        'daily minima'
+        t('findings.sourceDaily')
       )
     );
   } else if (nights.nights.length > 0) {
     blocks.push(
       finding(
-        'The nights are still cooling down',
-        `Every night in this window drops below ${nights.threshold} °C, so the body ` +
-          'gets its chance to recover. That is the single biggest thing separating ' +
-          'an uncomfortable week from a dangerous one.',
+        t('findings.nightsCoolTitle'),
+        t('findings.nightsCoolDetail', { threshold: n(nights.threshold, 0) }),
         'good',
-        'daily minima'
+        t('findings.sourceDaily')
       )
     );
   }
@@ -318,18 +381,20 @@ function renderFindings() {
     blocks.push(
       finding(
         acc.unacclimatised
-          ? `This is ${acc.difference.toFixed(1)} °C hotter than anything last week`
-          : 'Your body has seen this heat before',
+          ? t('findings.unacclimatisedTitle', { difference: n(acc.difference, 1) })
+          : t('findings.acclimatisedTitle'),
         acc.unacclimatised
-          ? `Today reaches ${acc.todayMax.toFixed(1)} °C; the warmest day of the past ` +
-            `${acc.days} was ${acc.warmestRecent.toFixed(1)} °C. Acclimatisation takes ` +
-            'one to two weeks, which is why the first heat wave of a summer is ' +
-            'reliably the deadliest — at temperatures the same people shrug off in August.'
-          : `Today reaches ${acc.todayMax.toFixed(1)} °C and last week already got to ` +
-            `${acc.warmestRecent.toFixed(1)} °C. Adapted people sweat sooner and lose ` +
-            'less salt doing it.',
+          ? t('findings.unacclimatisedDetail', {
+              today: n(acc.todayMax, 1),
+              days: acc.days,
+              recent: n(acc.warmestRecent, 1),
+            })
+          : t('findings.acclimatisedDetail', {
+              today: n(acc.todayMax, 1),
+              recent: n(acc.warmestRecent, 1),
+            }),
         acc.unacclimatised ? 'strong' : 'good',
-        'past 7 days'
+        t('findings.sourcePast')
       )
     );
   }
@@ -347,8 +412,6 @@ function finding(title, detail, tone, source) {
   );
 }
 
-const hhmm = (hour) => `${String(hour).padStart(2, '0')}:00`;
-
 // -------------------------------------------------------------- location ----
 
 function setStatus(html, kind = 'info') {
@@ -357,7 +420,10 @@ function setStatus(html, kind = 'info') {
 }
 
 async function loadWeather(latitude, longitude, label) {
-  setStatus(`<span class="spin">Fetching hourly weather for ${escape(label)}…</span>`, 'busy');
+  setStatus(
+    `<span class="spin">${escape(t('where.fetching', { place: label }))}</span>`,
+    'busy'
+  );
 
   try {
     const data = await fetchForecast(latitude, longitude);
@@ -390,16 +456,42 @@ async function loadWeather(latitude, longitude, label) {
     setStatus(
       `<strong>${escape(label)}</strong> · ${escape(state.forecast.place.timezone)} · ` +
         `${escape(stamp)}<br>` +
-        `<span class="where-detail">Coordinates sent: ${latitude.toFixed(2)}, ${longitude.toFixed(2)}. ` +
-        `Nothing else left this browser.</span>`,
+        `<span class="where-detail">${escape(
+          t('where.sent', { latitude: n(latitude, 2), longitude: n(longitude, 2) })
+        )}</span>`,
       'ok'
     );
     draw();
   } catch (error) {
-    const message = error instanceof WeatherError ? error.message : String(error);
-    setStatus(escape(message), 'error');
+    setStatus(escape(errorText(error)), 'error');
   }
 }
+
+/**
+ * A thrown weather error names its kind; the sentence comes from the bundle.
+ *
+ * An unknown throw falls back to `errors.generic` rather than to the raw
+ * exception text, which would be English no matter what language the page is
+ * in -- and would also be the wrong register for someone who just wanted the
+ * weather.
+ */
+function errorText(error) {
+  if (error instanceof WeatherError) {
+    const key = `errors.${ERROR_KEYS[error.kind] ?? 'generic'}`;
+    if (t.has?.(key)) return t(key);
+  }
+  return t('errors.generic');
+}
+
+const ERROR_KEYS = {
+  offline: 'offline',
+  timeout: 'timeout',
+  denied: 'denied',
+  unsupported: 'unsupported',
+  'not-found': 'notFound',
+  server: 'server',
+  malformed: 'malformed',
+};
 
 function syncFactorBoxes() {
   for (const box of $('factors').querySelectorAll?.('[data-factor]') ?? []) {
@@ -425,13 +517,19 @@ function startGlobe() {
     globe = createGlobe(canvas, { latitude: 22, longitude: 58 });
   } catch (error) {
     canvas.replaceWith?.(canvas);
-    $('globe-note').textContent =
-      'This browser cannot draw the globe (WebGL is unavailable). ' +
-      'Everything else on the page works without it.';
+    $('globe-note').textContent = t('globe.noWebGL');
     $('globe-note').className = 'globe-note globe-note-error';
     return;
   }
 
+  renderGlobeText();
+}
+
+/**
+ * The globe's words, separated from the globe's WebGL so a language change can
+ * redraw them without touching the context.
+ */
+function renderGlobeText() {
   // Mark the bands no cell reaches. Showing a full scale is right — it is
   // what the colours mean — but leaving the reader to assume every band is
   // populated would overstate what the data says.
@@ -442,18 +540,25 @@ function startGlobe() {
     return (
       `<div class="globe-key${used ? '' : ' globe-key-empty'}">` +
       `<span class="globe-swatch" style="background:${rgb(entry.colour)}"></span>` +
-      `<span class="globe-key-label">${escape(entry.label)}</span>` +
-      `<span class="globe-key-note">${escape(used ? entry.note : `${entry.note} — no cell here`)}</span>` +
+      `<span class="globe-key-label">${escape(t(`globe.${entry.id}`))}</span>` +
+      `<span class="globe-key-note">${escape(
+        used
+          ? t(`globe.${entry.id}Note`)
+          : t('globe.bandEmpty', { note: t(`globe.${entry.id}Note`) })
+      )}</span>` +
       `</div>`
     );
   }).join('');
 
   renderGlobeFacts();
 
-  $('globe-note').textContent =
-    `${CLIMATOLOGY_META.cells} land cells at ${CLIMATOLOGY_META.step}°, ` +
-    `${CLIMATOLOGY_META.percentile}th percentile wet bulb, ` +
-    `${CLIMATOLOGY_META.years[0]}–${CLIMATOLOGY_META.years.at(-1)}.`;
+  $('globe-note').textContent = t('globe.note', {
+    cells: CLIMATOLOGY_META.cells,
+    step: CLIMATOLOGY_META.step,
+    percentile: CLIMATOLOGY_META.percentile,
+    from: CLIMATOLOGY_META.years[0],
+    to: CLIMATOLOGY_META.years.at(-1),
+  });
 }
 
 const rgb = (colour) =>
@@ -464,8 +569,6 @@ const rgb = (colour) =>
  * than written down — so they cannot drift away from what is drawn.
  */
 function renderGlobeFacts() {
-  const values = CLIMATOLOGY.map((cell) => cell[2]);
-  const past31 = CLIMATOLOGY.filter((cell) => cell[2] >= 31);
   const past29 = CLIMATOLOGY.filter((cell) => cell[2] >= 29);
   const worst = CLIMATOLOGY.reduce((a, b) => (b[2] > a[2] ? b : a));
 
@@ -473,25 +576,22 @@ function renderGlobeFacts() {
 
   const facts = [
     [
-      `${hot.length} of ${CLIMATOLOGY.length} land cells sit above 26 °C`,
-      `and they are not scattered: the Ganges delta, the Punjab, the North China ` +
-        `Plain, the Gulf. Roughly a fifth of humanity lives inside that handful of ` +
-        `cells, which is the whole reason this map is worth drawing.`,
+      t('globe.factHotCellsTitle', { count: hot.length, total: CLIMATOLOGY.length }),
+      t('globe.factHotCellsDetail'),
     ],
     [
-      `Nothing here reaches ${past29.length > 0 ? '31' : '29'} °C — and that is not reassurance`,
-      `This is the 95th percentile across a whole hot season, so it describes the ` +
-        `weather a place has most summers, not its worst hour. Single hours go far ` +
-        `higher: 35 °C wet bulb has been recorded on the Persian Gulf coast. A cell ` +
-        `at 28 °C spends real hours well past 31.`,
+      t('globe.factCeilingTitle', { limit: past29.length > 0 ? 31 : 29 }),
+      t('globe.factCeilingDetail'),
     ],
     [
-      `Hottest cell: ${worst[2].toFixed(1)} °C at ` +
-        `${Math.abs(worst[0]).toFixed(0)}° ${worst[0] >= 0 ? 'N' : 'S'}, ` +
-        `${Math.abs(worst[1]).toFixed(0)}° ${worst[1] >= 0 ? 'E' : 'W'}`,
-      `Each cell is ${CLIMATOLOGY_META.step}° across — about 650 km — so it averages ` +
-        `a coastline with a plateau and a city with a field. Real places inside it ` +
-        `diverge in both directions.`,
+      t('globe.factHottestTitle', {
+        value: n(worst[2], 1),
+        latitude: n(Math.abs(worst[0]), 0),
+        ns: t(worst[0] >= 0 ? 'globe.north' : 'globe.south'),
+        longitude: n(Math.abs(worst[1]), 0),
+        ew: t(worst[1] >= 0 ? 'globe.east' : 'globe.west'),
+      }),
+      t('globe.factHottestDetail', { step: CLIMATOLOGY_META.step }),
     ],
   ];
 
@@ -502,6 +602,76 @@ function renderGlobeFacts() {
         `<p class="globe-fact-detail">${escape(detail)}</p></div>`
     )
     .join('');
+}
+
+// -------------------------------------------------------------- language ----
+
+/**
+ * Resolve every `data-i18n` hook in the static markup.
+ *
+ * The markup ships English. This overwrites it, and if a key were missing the
+ * translator would put `[key]` on screen rather than quietly leaving the
+ * English behind -- a gap you can see is a gap that gets fixed.
+ */
+function applyStaticText(root = document) {
+  for (const node of root.querySelectorAll('[data-i18n]')) {
+    node.textContent = t(node.dataset.i18n);
+  }
+  for (const node of root.querySelectorAll('[data-i18n-attr]')) {
+    for (const pair of node.dataset.i18nAttr.split(',')) {
+      const index = pair.indexOf(':');
+      if (index < 0) continue;
+      node.setAttribute(pair.slice(0, index).trim(), t(pair.slice(index + 1).trim()));
+    }
+  }
+}
+
+function buildLanguageSwitch() {
+  const select = $('language');
+  if (!select) return;
+
+  // Each option is labelled in its own language, never in the current one. A
+  // reader looking for their language is scanning for a word they recognise,
+  // and "Arabic" is not that word for someone who reads Arabic.
+  select.innerHTML = LANGUAGES.map(
+    (language) =>
+      `<option value="${escape(language.code)}" lang="${escape(language.code)}">` +
+      `${escape(language.native)}</option>`
+  ).join('');
+
+  select.value = currentInfo().code;
+  select.addEventListener('change', () => setLanguage(select.value));
+}
+
+/**
+ * Say plainly that a translation is unchecked, in the language being read.
+ *
+ * English is the source, so it carries no warning. Every other language does,
+ * and it stays visible rather than hiding behind a tooltip: the tool gives
+ * safety instructions, and a reader is entitled to know how much weight the
+ * wording will bear.
+ */
+function renderLanguageWarning() {
+  const banner = $('language-warning');
+  if (!banner) return;
+  const isSource = currentInfo().code === DEFAULT_LANGUAGE;
+  banner.hidden = isSource;
+
+  const link = $('language-original');
+  if (link) link.hidden = isSource;
+}
+
+/** Everything on the page that carries words, redrawn in the new language. */
+function applyLanguage() {
+  applyStaticText();
+  renderLanguageWarning();
+  buildPresets();
+  buildFactors();
+  buildBuildings();
+  buildMeasures();
+  buildLegend();
+  syncFactorBoxes();
+  draw();
 }
 
 // ---------------------------------------------------------------- draw ----
@@ -528,8 +698,8 @@ function setConditions(celsius, humidity) {
 
   $('temp').value = String(state.celsius);
   $('humidity').value = String(state.humidity);
-  $('temp-out').textContent = `${state.celsius.toFixed(1)} °C`;
-  $('humidity-out').textContent = `${state.humidity} %`;
+  $('temp-out').textContent = degrees(state.celsius, 1);
+  $('humidity-out').textContent = `${n(state.humidity, 0)} ${t('units.percent')}`;
 
   for (const button of document.querySelectorAll('[data-preset]')) {
     button.setAttribute('aria-pressed', 'false');
@@ -580,11 +750,25 @@ function attachDrag() {
 
 // ----------------------------------------------------------------- wire ----
 
+// The language has to be settled before anything renders: every builder below
+// reads through `t()`, and a builder that ran first would have to be run again.
+initLanguage();
+buildLanguageSwitch();
+applyStaticText();
+renderLanguageWarning();
+
 buildPresets();
 buildFactors();
 buildBuildings();
 buildMeasures();
 buildLegend();
+
+onLanguageChange(() => {
+  applyLanguage();
+  // The globe's legend and facts are built once at start-up, so they need
+  // their own nudge -- everything else goes through applyLanguage().
+  if (globe) renderGlobeText();
+});
 
 $('temp').addEventListener('input', (event) =>
   setConditions(Number(event.target.value), state.humidity)
@@ -615,9 +799,9 @@ $('low').addEventListener('input', (event) => {
   if (state.low > state.high - 2) {
     state.high = state.low + 2;
     $('high').value = String(state.high);
-    $('high-out').textContent = `${state.high} °C`;
+    $('high-out').textContent = degrees(state.high, 0);
   }
-  $('low-out').textContent = `${state.low} °C`;
+  $('low-out').textContent = degrees(state.low, 0);
   renderDay();
 });
 
@@ -626,9 +810,9 @@ $('high').addEventListener('input', (event) => {
   if (state.high < state.low + 2) {
     state.low = state.high - 2;
     $('low').value = String(state.low);
-    $('low-out').textContent = `${state.low} °C`;
+    $('low-out').textContent = degrees(state.low, 0);
   }
-  $('high-out').textContent = `${state.high} °C`;
+  $('high-out').textContent = degrees(state.high, 0);
   renderDay();
 });
 
@@ -646,22 +830,22 @@ $('place-form').addEventListener('submit', async (event) => {
   const query = $('place').value.trim();
   if (!query) return;
 
-  setStatus('<span class="spin">Looking up the place…</span>', 'busy');
+  setStatus(`<span class="spin">${escape(t('where.lookingUp'))}</span>`, 'busy');
   try {
     const [best] = await searchPlace(query);
     await loadWeather(best.latitude, best.longitude, best.label);
   } catch (error) {
-    setStatus(escape(error instanceof WeatherError ? error.message : String(error)), 'error');
+    setStatus(escape(errorText(error)), 'error');
   }
 });
 
 $('here').addEventListener('click', async () => {
-  setStatus('<span class="spin">Asking the browser where you are…</span>', 'busy');
+  setStatus(`<span class="spin">${escape(t('where.askingLocation'))}</span>`, 'busy');
   try {
     const position = await currentPosition();
-    await loadWeather(position.latitude, position.longitude, 'your location');
+    await loadWeather(position.latitude, position.longitude, t('where.useLocation'));
   } catch (error) {
-    setStatus(escape(error instanceof WeatherError ? error.message : String(error)), 'error');
+    setStatus(escape(errorText(error)), 'error');
   }
 });
 

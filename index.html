@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>wetbulb — the temperature that decides whether you can cool down</title>
-<meta name="description" content="Air temperature does not tell you whether heat is dangerous. Wet-bulb temperature does. Find out where you stand, whether a fan helps, and which hour of today is really the worst. Works offline; fetches real weather if you ask.">
+<title data-i18n="meta.title">wetbulb — the temperature that decides whether you can cool down</title>
+<meta name="description" data-i18n-attr="content:meta.description" content="Air temperature does not tell you whether heat is dangerous. Wet-bulb temperature does. Find out where you stand, whether a fan helps, and which hour of today is really the worst. Works offline; fetches real weather if you ask.">
 <meta name="color-scheme" content="dark light">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🌡️</text></svg>">
 <link rel="stylesheet" href="styles.css">
@@ -16,26 +16,39 @@
     <div class="masthead-grid">
       <div>
         <h1>wetbulb</h1>
-        <p class="lede">
+        <p class="lede" data-i18n="masthead.lede">
           Heat kills more people than any other kind of weather — and the number
           in every warning is the wrong one.
         </p>
         <p class="blurb">
-          Air temperature says almost nothing about whether a body can shed heat.
-          <strong>Wet-bulb temperature</strong> decides it. At 45&nbsp;°C in dry
+          <span data-i18n="masthead.blurbBefore">Air temperature says almost nothing about whether a body can shed heat.</span>
+          <strong data-i18n="masthead.blurbTerm">Wet-bulb temperature</strong>
+          <span data-i18n="masthead.blurbAfter">decides it. At 45&nbsp;°C in dry
           desert air a healthy person sweats and survives. At 35&nbsp;°C in humid
-          air they cannot, because there is nowhere for the sweat to go.
+          air they cannot, because there is nowhere for the sweat to go.</span>
         </p>
       </div>
       <aside class="masthead-note">
-        <p class="mono-label">what this is</p>
-        <p>
+        <p class="mono-label" data-i18n="masthead.whatLabel">what this is</p>
+        <p data-i18n="masthead.what">
           A calculator and a set of decisions, not a warning service. Give it two
           numbers, or let it fetch real hourly weather for a place — the sliders
           keep working either way.
         </p>
-        <p class="privacy">No account, no tracking. Works with no network at all — and if you ask it for real weather, it sends only your coordinates to <a href="https://open-meteo.com">Open-Meteo</a>.</p>
+        <p class="privacy"><span data-i18n="masthead.privacyBefore">No account, no tracking. Works with no network at all — and if you ask it for real weather, it sends only your coordinates to</span> <a href="https://open-meteo.com">Open-Meteo</a><span data-i18n="masthead.privacyAfter">.</span></p>
       </aside>
+    </div>
+
+    <div class="language-bar">
+      <label class="language-pick">
+        <span class="mono-label" data-i18n="language.label">Language</span>
+        <select id="language" class="language-select"></select>
+      </label>
+      <p class="language-warning" id="language-warning" hidden>
+        <strong data-i18n="language.machineWarningTitle">This translation has not been checked by a native speaker</strong>
+        <span data-i18n="language.machineWarning"></span>
+        <a href="?lang=en" id="language-original" data-i18n="language.original">Read the English original</a>
+      </p>
     </div>
   </div>
 </header>
@@ -45,8 +58,8 @@
   <!-- ===================== LOCATION ===================== -->
   <section class="instrument instrument-first" aria-labelledby="where-heading">
     <div class="instrument-head">
-      <h2 id="where-heading">Real weather, if you want it</h2>
-      <p class="instrument-sub">
+      <h2 id="where-heading" data-i18n="where.heading">Real weather, if you want it</h2>
+      <p class="instrument-sub" data-i18n="where.sub">
         Everything below works from the two sliders alone. Fetching hourly data
         adds three things the sliders cannot know: which hour of today is
         actually the worst, how many nights in a row have given no relief, and
@@ -57,13 +70,13 @@
     <div class="where">
       <form id="place-form" class="place-form" autocomplete="off">
         <label class="control">
-          <span class="control-label">Search for a place</span>
+          <span class="control-label" data-i18n="where.searchLabel">Search for a place</span>
           <div class="place-row">
-            <input type="text" id="place" placeholder="Cologne, Delhi, Phoenix…" maxlength="80">
-            <button type="submit" class="preset">Look up</button>
+            <input type="text" id="place" data-i18n-attr="placeholder:where.searchPlaceholder" placeholder="Cologne, Delhi, Phoenix…" maxlength="80">
+            <button type="submit" class="preset" data-i18n="where.lookUp">Look up</button>
           </div>
         </label>
-        <button type="button" id="here" class="preset preset-wide">Use my location</button>
+        <button type="button" id="here" class="preset preset-wide" data-i18n="where.useLocation">Use my location</button>
       </form>
 
       <div class="where-status" id="where-status" aria-live="polite"></div>
@@ -75,8 +88,8 @@
   <!-- ===================== THE STATE CHART ===================== -->
   <section class="instrument" aria-labelledby="chart-heading">
     <div class="instrument-head">
-      <h2 id="chart-heading">Where this air puts you</h2>
-      <p class="instrument-sub">
+      <h2 id="chart-heading" data-i18n="chart.heading">Where this air puts you</h2>
+      <p class="instrument-sub" data-i18n="chart.sub">
         Drag the point, or use the fields. Every line is computed from the same
         physics as the numbers beside it.
       </p>
@@ -94,7 +107,7 @@
     <div class="controls">
       <label class="control">
         <span class="control-label">
-          Air temperature
+          <span data-i18n="chart.tempLabel">Air temperature</span>
           <output id="temp-out" class="control-value">32.0 °C</output>
         </span>
         <input type="range" id="temp" min="15" max="50" step="0.5" value="32">
@@ -102,14 +115,14 @@
 
       <label class="control">
         <span class="control-label">
-          Relative humidity
+          <span data-i18n="chart.humidityLabel">Relative humidity</span>
           <output id="humidity-out" class="control-value">60 %</output>
         </span>
         <input type="range" id="humidity" min="0" max="100" step="1" value="60">
       </label>
 
       <div class="control control-presets">
-        <span class="control-label">Or try a real one</span>
+        <span class="control-label" data-i18n="chart.presetsLabel">Or try a real one</span>
         <div class="preset-row" id="presets"></div>
       </div>
     </div>
@@ -118,8 +131,8 @@
   <!-- ===================== WHO ===================== -->
   <section class="instrument" aria-labelledby="who-heading">
     <div class="instrument-head">
-      <h2 id="who-heading">Who is in this air</h2>
-      <p class="instrument-sub">
+      <h2 id="who-heading" data-i18n="who.heading">Who is in this air</h2>
+      <p class="instrument-sub" data-i18n="who.sub">
         The published limits describe young, healthy, acclimatised people at
         rest — which is not who dies in heat waves. Each of these moves the
         threshold by a stated number of degrees.
@@ -132,9 +145,9 @@
   <!-- ===================== ACTIONS ===================== -->
   <section class="instrument" aria-labelledby="actions-heading">
     <div class="instrument-head">
-      <h2 id="actions-heading">What to do, in order</h2>
-      <p class="instrument-sub">
-        Ranked by what each one is worth <em>in these conditions</em>. The first
+      <h2 id="actions-heading" data-i18n="actions.heading">What to do, in order</h2>
+      <p class="instrument-sub" data-i18n="actions.sub">
+        Ranked by what each one is worth in these conditions. The first
         line is the one that matters most.
       </p>
     </div>
@@ -144,11 +157,11 @@
   <!-- ===================== THE DAY ===================== -->
   <section class="instrument" aria-labelledby="day-heading">
     <div class="instrument-head">
-      <h2 id="day-heading">The day, hour by hour</h2>
+      <h2 id="day-heading" data-i18n="day.heading">The day, hour by hour</h2>
       <p class="instrument-sub" id="day-sub">
         Two questions on one time axis: when this air is at its worst, and when
         opening a window stops importing heat. Without a fetched forecast both
-        curves are a <strong>model</strong> built from a high and a low, drawn
+        curves are a model built from a high and a low, drawn
         dashed for that reason.
       </p>
     </div>
@@ -165,7 +178,7 @@
         <div class="day-controls">
           <label class="control control-compact">
             <span class="control-label">
-              Today's low
+              <span data-i18n="day.lowLabel">Today's low</span>
               <output id="low-out" class="control-value">18 °C</output>
             </span>
             <input type="range" id="low" min="5" max="35" step="1" value="18">
@@ -173,14 +186,14 @@
 
           <label class="control control-compact">
             <span class="control-label">
-              Today's high
+              <span data-i18n="day.highLabel">Today's high</span>
               <output id="high-out" class="control-value">34 °C</output>
             </span>
             <input type="range" id="high" min="15" max="50" step="1" value="34">
           </label>
 
           <fieldset class="building">
-            <legend class="control-label">Your building</legend>
+            <legend class="control-label" data-i18n="day.buildingLabel">Your building</legend>
             <div id="buildings"></div>
           </fieldset>
         </div>
@@ -191,8 +204,8 @@
   <!-- ===================== THE GLOBE ===================== -->
   <section class="instrument" aria-labelledby="globe-heading">
     <div class="instrument-head">
-      <h2 id="globe-heading">Where the heat lives</h2>
-      <p class="instrument-sub">
+      <h2 id="globe-heading" data-i18n="globe.heading">Where the heat lives</h2>
+      <p class="instrument-sub" data-i18n="globe.sub">
         Not today's weather — the shape of the problem. Each dot is the wet-bulb
         temperature a place reaches in a normal hot season, from three years of
         reanalysis. Drag to turn, scroll to zoom. Look up a place above and the
@@ -203,6 +216,7 @@
     <div class="globe-layout">
       <figure class="globe-frame">
         <canvas id="globe" class="globe-canvas" width="640" height="640"
+                data-i18n-attr="aria-label:globe.ariaLabel"
                 aria-label="A globe showing where wet-bulb temperature is structurally high"></canvas>
         <figcaption class="globe-note" id="globe-note"></figcaption>
       </figure>
@@ -217,8 +231,8 @@
   <!-- ===================== MEASURES ===================== -->
   <section class="instrument" aria-labelledby="measures-heading">
     <div class="instrument-head">
-      <h2 id="measures-heading">What actually cools a room</h2>
-      <p class="instrument-sub">
+      <h2 id="measures-heading" data-i18n="measures.heading">What actually cools a room</h2>
+      <p class="instrument-sub" data-i18n="measures.sub">
         Most heat advice is a flat list in which "close the curtains" sits beside
         "shade the window from outside", as if they were comparable. They differ
         by about five times.
@@ -230,12 +244,12 @@
   <!-- ===================== HONESTY ===================== -->
   <section class="instrument instrument-quiet" aria-labelledby="limits-heading">
     <div class="instrument-head">
-      <h2 id="limits-heading">What this cannot do</h2>
+      <h2 id="limits-heading" data-i18n="limits.heading">What this cannot do</h2>
     </div>
     <div class="limits">
       <div class="limit">
-        <p class="mono-label">not a doctor</p>
-        <p>
+        <p class="mono-label" data-i18n="limits.doctorLabel">not a doctor</p>
+        <p data-i18n="limits.doctor">
           Nothing here is medical advice, and the thresholds are calibrated to
           published physiology, not to you. If someone is confused, agitated, or
           has stopped sweating in heat, that is an emergency — call, do not
@@ -243,25 +257,25 @@
         </p>
       </div>
       <div class="limit">
-        <p class="mono-label">not a forecast</p>
-        <p>
-          It has no idea what the weather is. You supply the numbers; it tells
-          you what they mean. Official heat warnings know things this does not,
-          including how long the heat has already lasted.
+        <p class="mono-label" data-i18n="limits.forecastLabel">not a forecast</p>
+        <p data-i18n="limits.forecast">
+          It does not know what the weather is unless you ask it to look. Official
+          heat warnings know things this does not, including how long the heat has
+          already lasted.
         </p>
       </div>
       <div class="limit">
-        <p class="mono-label">two limits, not one</p>
-        <p>
-          35&nbsp;°C wet bulb is the <em>theoretical</em> limit. Around
-          31&nbsp;°C is where strain has actually been <em>measured</em> on young
+        <p class="mono-label" data-i18n="limits.limitsLabel">two limits, not one</p>
+        <p data-i18n="limits.limitsText">
+          35&nbsp;°C wet bulb is the theoretical limit. Around
+          31&nbsp;°C is where strain has actually been measured on young
           healthy subjects. Quoting only the 35 makes the danger look four
           degrees further away than it is.
         </p>
       </div>
       <div class="limit">
-        <p class="mono-label">shade, and standing still</p>
-        <p>
+        <p class="mono-label" data-i18n="limits.shadeLabel">shade, and standing still</p>
+        <p data-i18n="limits.shade">
           Every number here assumes shade and rest. Direct sun adds the
           equivalent of several degrees; physical work can multiply your heat
           production tenfold.
@@ -274,8 +288,8 @@
 
 <footer class="wrap">
   <p>
-    <a href="https://github.com/KatoHearto/wetbulb">Source, sources and test suite on GitHub</a>
-    · MIT · built to be checked, not believed
+    <a href="https://github.com/KatoHearto/wetbulb" data-i18n="footer.source">Source, sources and test suite on GitHub</a>
+    · MIT · <span data-i18n="footer.tagline">built to be checked, not believed</span>
   </p>
 </footer>
 

@@ -56,35 +56,27 @@ export function outdoorTemperature(hour, low, high) {
 export const BUILDINGS = [
   {
     id: 'heavy',
-    label: 'Solid masonry, thick walls',
     inertia: 0.35,
     lagHours: 5,
     boost: 0,
-    note: 'stays cool for days, then stays hot for days once it has warmed through',
   },
   {
     id: 'medium',
-    label: 'Ordinary flat or house',
     inertia: 0.55,
     lagHours: 3.5,
     boost: 0.5,
-    note: 'follows the day at about half the swing, three hours behind',
   },
   {
     id: 'light',
-    label: 'Top floor, or a roof room',
     inertia: 0.75,
     lagHours: 2,
     boost: 2.5,
-    note: 'the roof radiates into the room all evening — the deadliest kind of flat',
   },
   {
     id: 'glazed',
-    label: 'Large windows facing the sun',
     inertia: 0.8,
     lagHours: 1.5,
     boost: 3.5,
-    note: 'glass lets in shortwave sun and traps the longwave heat it becomes',
   },
 ];
 
@@ -159,10 +151,6 @@ export function ventilationWindow(low, high, buildingId = 'medium', margin = 1.0
     return {
       hours: worthwhile,
       any: false,
-      summary:
-        'Outdoor air never drops meaningfully below indoor air today. There is no ' +
-        'good hour to ventilate — keep everything shut and shaded, and cool ' +
-        'yourself rather than the room.',
       opensAt: null,
       closesAt: null,
       bestHour: null,
@@ -196,10 +184,6 @@ export function ventilationWindow(low, high, buildingId = 'medium', margin = 1.0
     closesAt,
     bestHour: best.hour,
     bestGain: best.gain,
-    summary:
-      `Open everything from about ${formatHour(opensAt)} and shut it again by ` +
-      `${formatHour((closesAt + 1) % 24)}. The coldest air of the night arrives ` +
-      `around ${formatHour(best.hour)}, ${best.gain.toFixed(1)} °C below the room.`,
   };
 }
 
@@ -213,60 +197,12 @@ export function ventilationWindow(low, high, buildingId = 'medium', margin = 1.0
  * catches it afterwards.
  */
 export const MEASURES = [
-  {
-    id: 'external-shade',
-    label: 'Shade the glass from outside',
-    effect: 5,
-    detail:
-      'Shutters, awnings, a parasol, a sheet pegged outside — anything that stops ' +
-      'sunlight before it crosses the glass. Roughly five times the effect of the ' +
-      'same fabric hung inside.',
-  },
-  {
-    id: 'night-vent',
-    label: 'Flush the heat out at night',
-    effect: 4,
-    detail:
-      'Windows on opposite sides open together during the cool hours. Cross ' +
-      'ventilation moves several times the air of one open window, and it is the ' +
-      'only way to get yesterday’s heat back out of the walls.',
-  },
-  {
-    id: 'internal-blind',
-    label: 'Close curtains and blinds',
-    effect: 1,
-    detail:
-      'Worth doing, and far weaker than it feels: by the time light reaches an ' +
-      'indoor curtain the energy is already in the room. Light-coloured and ' +
-      'reflective helps a little.',
-  },
-  {
-    id: 'appliances',
-    label: 'Switch off everything that runs warm',
-    effect: 2,
-    detail:
-      'An oven, a tumble dryer, a desktop machine and a dozen standby lights are ' +
-      'a few hundred watts of heater in a room you are trying to cool. Cook ' +
-      'outside or cold.',
-  },
-  {
-    id: 'one-room',
-    label: 'Give up on the flat, defend one room',
-    effect: 3,
-    detail:
-      'Pick the coolest room — north-facing, ground floor, heavy walls — and shut ' +
-      'the rest. Cooling one room is achievable; cooling a flat, with these ' +
-      'means, is not.',
-  },
-  {
-    id: 'damp-cloth',
-    label: 'Cool yourself, not the room',
-    effect: 4,
-    detail:
-      'A wet cloth on the neck and forearms, feet in cool water, damp clothing. ' +
-      'When the air cannot be changed this is what remains, and it works — it ' +
-      'adds the evaporation your sweat can no longer manage.',
-  },
+  { id: 'externalShade', effect: 5 },
+  { id: 'nightVent', effect: 4 },
+  { id: 'internalBlind', effect: 1 },
+  { id: 'appliances', effect: 2 },
+  { id: 'oneRoom', effect: 3 },
+  { id: 'dampCloth', effect: 4 },
 ];
 
 export function rankedMeasures() {

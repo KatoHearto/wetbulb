@@ -22,6 +22,7 @@
  * from their weather app. A chart whose axis nobody can read is decoration.
  */
 
+import { n, t } from './i18n/index.js';
 import { WET_BULB_LIMITS, fanVerdict, wetBulb } from './psychro.js';
 
 export const DOMAIN = {
@@ -238,25 +239,24 @@ export function render(state) {
   parts.push(`<circle class="wb-point" cx="${px}" cy="${py}" r="5" />`);
   parts.push(
     `<title>${escape(
-      `${celsius.toFixed(1)} °C at ${humidity.toFixed(0)} % — wet bulb ${tw.toFixed(1)} °C`
+      t('chart.pointTitle', { temp: n(celsius, 1), humidity: n(humidity, 0), wetBulb: n(tw, 1) })
     )}</title>`
   );
 
   // --- axis titles ---------------------------------------------------------
   parts.push(
     `<text class="wb-axis" x="${PAD.left + plotWidth / 2}" y="${SIZE.height - 6}" ` +
-      `text-anchor="middle">air temperature °C</text>`
+      `text-anchor="middle">${escape(t('chart.axisTemp'))}</text>`
   );
   parts.push(
     `<text class="wb-axis" transform="rotate(-90 12 ${PAD.top + plotHeight / 2})" ` +
-      `x="12" y="${PAD.top + plotHeight / 2}" text-anchor="middle">relative humidity %</text>`
+      `x="12" y="${PAD.top + plotHeight / 2}" text-anchor="middle">${escape(t('chart.axisHumidity'))}</text>`
   );
 
   return (
     `<svg viewBox="0 0 ${SIZE.width} ${SIZE.height}" class="wb-chart-svg" ` +
     `role="img" aria-label="${escape(
-      `Air state chart. Your point: ${celsius.toFixed(1)} degrees at ${humidity.toFixed(0)} percent humidity, ` +
-        `wet bulb ${tw.toFixed(1)} degrees.`
+      t('chart.ariaLabel', { temp: n(celsius, 1), humidity: n(humidity, 0), wetBulb: n(tw, 1) })
     )}">${parts.join('')}</svg>`
   );
 }

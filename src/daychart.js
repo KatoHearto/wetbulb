@@ -13,6 +13,7 @@
  * conclusion rather than an estimate, so it is the only filled shape.
  */
 
+import { n, t } from './i18n/index.js';
 import { BUILDINGS_BY_ID, indoorCurve, outdoorCurve, ventilationWindow } from './cooling.js';
 
 const SIZE = { width: 420, height: 220 };
@@ -94,22 +95,27 @@ export function render(low, high, buildingId, currentHour = null) {
 
   parts.push(
     `<text class="wb-axis" x="${PAD.left + plotWidth / 2}" y="${SIZE.height - 4}" ` +
-      `text-anchor="middle">hour of day</text>`
+      `text-anchor="middle">${escape(t('day.axisHour'))}</text>`
   );
   parts.push(
     `<text class="wb-axis" transform="rotate(-90 10 ${PAD.top + plotHeight / 2})" ` +
-      `x="10" y="${PAD.top + plotHeight / 2}" text-anchor="middle">°C</text>`
+      `x="10" y="${PAD.top + plotHeight / 2}" text-anchor="middle">${escape(t('day.axisCelsius'))}</text>`
   );
 
+  const hhmm = (hour) => `${String(hour % 24).padStart(2, '0')}:00`;
   const description = windowResult.any
-    ? `Open the windows from ${String(windowResult.opensAt).padStart(2, '0')}:00 ` +
-      `until ${String((windowResult.closesAt + 1) % 24).padStart(2, '0')}:00.`
-    : 'No hour today when outdoor air is meaningfully cooler than indoor air.';
+    ? t('day.windowSummary', {
+        opens: hhmm(windowResult.opensAt),
+        closes: hhmm(windowResult.closesAt + 1),
+        best: hhmm(windowResult.bestHour),
+        gain: n(windowResult.bestGain, 1),
+      })
+    : t('day.windowNone');
 
   return {
     svg:
       `<svg viewBox="0 0 ${SIZE.width} ${SIZE.height}" class="wb-chart-svg" role="img" ` +
-      `aria-label="${escape(`Modelled temperature through the day. ${description}`)}">` +
+      `aria-label="${escape(`${t('day.subModelled').replace(/<[^>]+>/g, '')} ${description}`)}">` +
       parts.join('') +
       `</svg>`,
     window: windowResult,

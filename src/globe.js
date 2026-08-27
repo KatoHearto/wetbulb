@@ -118,14 +118,11 @@ export function colourFor(wetBulb) {
   return RAMP.at(-1).colour;
 }
 
-export const LEGEND = [
-  { label: '< 22°', colour: RAMP[0].colour, note: 'no heat constraint' },
-  { label: '22–25°', colour: RAMP[1].colour, note: 'noticeable in summer' },
-  { label: '25–27°', colour: RAMP[2].colour, note: 'work becomes hard' },
-  { label: '27–29°', colour: RAMP[3].colour, note: 'dangerous for the vulnerable' },
-  { label: '29–31°', colour: RAMP[4].colour, note: 'approaching the measured limit' },
-  { label: '≥ 31°', colour: RAMP[5].colour, note: 'past it, in a normal hot season' },
-];
+export const LEGEND = RAMP.map((step, index) => ({
+  id: `band${index + 1}`,
+  colour: step.colour,
+}));
+
 
 function compile(gl, type, source) {
   const shader = gl.createShader(type);

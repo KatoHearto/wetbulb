@@ -1,3 +1,4 @@
+import { en } from '../src/i18n/en.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
@@ -92,7 +93,8 @@ describe('the indoor curve', () => {
 
   it('describes every building it offers', () => {
     for (const building of BUILDINGS) {
-      assert.ok(building.note.length > 20, `${building.id} has no note`);
+      assert.ok(en.buildings[building.id], `${building.id} has no label`);
+      assert.ok(en.buildings[`${building.id}Note`]?.length > 20, `${building.id} has no note`);
       assert.ok(building.inertia > 0 && building.inertia <= 1);
       assert.ok(building.lagHours >= 0);
     }
@@ -186,23 +188,27 @@ describe('the ventilation window', () => {
     assert.equal(window.bestHour, coldest.hour);
   });
 
-  it('says the hours in the summary a person will actually read', () => {
+  it('reports the four numbers the page turns into a sentence', () => {
     const window = ventilationWindow(17, 33, 'medium');
-    assert.match(window.summary, /\d{2}:00/);
-    assert.match(window.summary, /shut it again/i);
+    for (const field of ['opensAt', 'closesAt', 'bestHour']) {
+      assert.ok(Number.isInteger(window[field]), `${field} is not an hour`);
+      assert.ok(window[field] >= 0 && window[field] <= 23, `${field} is out of range`);
+    }
+    assert.ok(window.bestGain > 0, 'a window worth opening must be worth something');
+    assert.match(en.day.windowSummary, /\{opens\}.*\{closes\}/s);
   });
 });
 
 describe('the passive measures', () => {
   it('ranks outside shading above inside blinds, by a lot', () => {
     const ranked = rankedMeasures();
-    const outside = ranked.findIndex((m) => m.id === 'external-shade');
-    const inside = ranked.findIndex((m) => m.id === 'internal-blind');
+    const outside = ranked.findIndex((m) => m.id === 'externalShade');
+    const inside = ranked.findIndex((m) => m.id === 'internalBlind');
 
     assert.ok(outside < inside, 'outside shading must come first');
     assert.equal(
-      MEASURES.find((m) => m.id === 'external-shade').effect /
-        MEASURES.find((m) => m.id === 'internal-blind').effect,
+      MEASURES.find((m) => m.id === 'externalShade').effect /
+        MEASURES.find((m) => m.id === 'internalBlind').effect,
       5,
       'and the stated ratio should reflect the physics, not be a vague "better"'
     );
@@ -210,7 +216,11 @@ describe('the passive measures', () => {
 
   it('explains every measure well enough to act on', () => {
     for (const measure of MEASURES) {
-      assert.ok(measure.detail.length > 60, `${measure.id} is too vague to follow`);
+      assert.ok(en.measures[measure.id], `${measure.id} has no label`);
+      assert.ok(
+        en.measures[`${measure.id}Detail`]?.length > 60,
+        `${measure.id} is too vague to follow`
+      );
     }
   });
 

@@ -6,6 +6,7 @@
  * nobody notices until somebody who knows where Delhi is looks at it.
  */
 
+import { en } from '../src/i18n/en.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
@@ -184,7 +185,8 @@ describe('the colour ramp', () => {
 
   it('explains each band rather than only naming a range', () => {
     for (const entry of LEGEND) {
-      assert.ok(entry.note.length > 10, `${entry.label} has no explanation`);
+      assert.ok(en.globe[entry.id], `${entry.id} has no range label`);
+      assert.ok(en.globe[`${entry.id}Note`]?.length > 10, `${entry.id} has no explanation`);
     }
   });
 });

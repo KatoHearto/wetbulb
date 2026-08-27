@@ -5,6 +5,7 @@
  * that the implementation has not changed, never that it is right.
  */
 
+import { en } from '../src/i18n/en.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
@@ -274,10 +275,15 @@ describe('the fan verdict', () => {
     assert.ok(width(42) > width(48), '48 °C more restrictive still');
   });
 
-  it('always explains itself', () => {
+  it('always reaches a verdict the page has words for', () => {
+    // The explanation moved to the bundles. What must hold here is that every
+    // verdict this function can return HAS an explanation waiting for it --
+    // a fourth verdict added later would fail this rather than render `[key]`.
     for (const [t, rh] of [[25, 50], [40, 50], [47, 10]]) {
-      const result = fanVerdict(t, rh);
-      assert.ok(result.reason.length > 30, `${t} °C / ${rh} % gave no reason`);
+      const { verdict } = fanVerdict(t, rh);
+      assert.ok(['helps', 'marginal', 'harmful'].includes(verdict), `${t}/${rh}: ${verdict}`);
+      const key = `fanReason${verdict[0].toUpperCase()}${verdict.slice(1)}`;
+      assert.ok(en.actions[key]?.length > 30, `${verdict} has no reason in the bundle`);
     }
   });
 });

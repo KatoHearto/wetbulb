@@ -302,6 +302,98 @@ be recovering from. Live Cologne data showed 28.2 °C at midnight and 23.6 °C a
 [a regression test](test/forecast.test.js) now fails if the room moves more than
 2 °C in an hour.
 
+## Six languages, and the warning that comes with them
+
+The tool's own map says where the heat is: the Gangetic plain, the Punjab, the
+North China Plain, the Persian Gulf. An English-only heat tool is least useful
+exactly where heat is worst, which is a strange thing for a tool about heat to
+be. So the page reads in six languages.
+
+| | | | keys | words |
+|---|---|---|---|---|
+| `en` | English | source | 274 | 2 873 |
+| `de` | Deutsch | | 274 | 2 745 |
+| `es` | Español | | 274 | 3 119 |
+| `fr` | Français | | 274 | 3 141 |
+| `hi` | हिन्दी | Gangetic plain, Punjab — the hottest cells on this page's own map | 274 | 3 267 |
+| `ar` | العربية | Persian Gulf — where 35 °C wet bulb was actually recorded; right-to-left | 274 | 2 440 |
+
+**None of the five translations has been checked by a native speaker**, and
+the page says so, in the language being read, above everything else it says.
+That matters more here than on most pages: this one contains the sentences
+"switch the fan off", "call emergency services" and "get to cooler air now".
+A mistranslation of those does harm that a mistranslated marketing page does
+not. English governs; every other language carries a link back to it.
+
+Portuguese was left out on purpose rather than added for the count. Six
+unchecked translations are already more trust than this can carry.
+
+### What holds it together
+
+Every module that decides something now returns an **id**, not a sentence.
+`actions()` returns `{ id: 'fanOff', tone: 'stop' }`; `fanVerdict()` returns
+`'harmful'`; `wetBulbAccuracy()` returns `'poor'`. The physics files contain no
+English at all any more. That is not tidiness — it is what makes six languages
+possible without six copies of the branching, and it means a new verdict
+cannot ship without somebody noticing it has no words.
+
+Nothing falls back silently. A missing key renders as `[some.key]` on screen,
+because a gap you can see is a gap that gets fixed, and a gap papered over with
+English is a page that lies about being translated.
+
+`?lang=hi` works, so "read this in Hindi" is a link you can send.
+
+### What the tests hold
+
+Six bundles, checked pairwise against the English one:
+
+- every bundle has **exactly** the same 274 keys — no more, no fewer
+- every `{placeholder}` matches the English template's, in the same set — a
+  translation that drops `{threshold}` still reads like a sentence, and would
+  otherwise silently stop naming the number the sentence is about
+- no value longer than 30 characters is still English
+- the values that **are** identical to English are frozen as a reviewed list
+  per language, so a new untranslated label breaks the build. The list is
+  short and each entry was looked at: `°C`, `Stull 2011`, band ranges like
+  `< 22°`, compass letters, and the handful of words genuinely spelled the same
+  (Spanish and German both write *Diabetes*; French writes *Stimulants*)
+- every `data-i18n` hook in `index.html` names a key that exists
+- switching language at runtime redraws the readout, the factors and the
+  actions, flips `dir` to `rtl` for Arabic, and switching back is lossless
+
+That last one exists because screenshots cannot see it: a screenshot only ever
+loads one language.
+
+### Three faults only the screenshots found
+
+The suite was green before any of these, which is the point of looking.
+
+1. **Every `°C` in `app.js` was a literal.** Arabic writes it `°م`. The readout
+   said `25.8 °C` inside an otherwise Arabic table — a unit in the wrong
+   alphabet, and a content error rather than a styling one. Units are keys now.
+
+2. **The bidi algorithm reordered numbers.** `32.0 °م` rendered as `م° 32.0`,
+   and the margin cell as `5.2° م`. The fix is isolating each number-plus-unit;
+   my *first* fix — forcing the whole readout table left-to-right — is what
+   glued every value to its label, which the next screenshot showed.
+
+3. **The stylesheet used physical `left`/`right`.** Those do not flip. Under
+   RTL the labels and values hugged each other in the middle of the table.
+   Converted to logical properties (`padding-inline-start`, `text-align: end`),
+   which fixes both directions with one rule.
+
+The charts and the globe deliberately do **not** mirror. A time axis running
+00 to 23 and a temperature axis running cold to hot are not script; flipping
+them would put midnight on the right and call it a translation.
+
+### One fault the tests found about the tests
+
+Node 22 exposes the machine's locale as `navigator.language`. On this machine
+that is `de-DE`, so the smoke test rendered the entire page in German and
+failed on assertions about English copy — while a GitHub runner reports
+`en-US` and would have passed. A test whose result depends on the developer's
+operating system is not a test. It pins the language explicitly now.
+
 ## Honest limits
 
 - **Not medical advice.** The thresholds are calibrated to published

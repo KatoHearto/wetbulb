@@ -1,3 +1,4 @@
+import { en } from '../src/i18n/en.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
@@ -12,19 +13,24 @@ import {
 } from '../src/risk.js';
 import { WET_BULB_LIMITS, wetBulb } from '../src/psychro.js';
 
-const titles = (list) => list.map((entry) => entry.title);
+const ids = (list) => list.map((entry) => entry.id);
 
 describe('the factor table', () => {
   it('gives every factor a reason a person could argue with', () => {
+    // The reason lives in the bundle now, so this reaches for it there. It is
+    // still the same claim: no factor may move a threshold without saying why.
     for (const factor of FACTORS) {
-      assert.ok(factor.why.length > 40, `${factor.id} has no real explanation`);
+      const why = en.factors[`${factor.id}Why`];
+      assert.ok(why, `${factor.id} has no reason in the bundle`);
+      assert.ok(why.length > 40, `${factor.id} has no real explanation`);
+      assert.ok(en.factors[factor.id], `${factor.id} has no label in the bundle`);
       assert.ok(factor.shift > 0, `${factor.id} shifts nothing`);
       assert.ok(factor.shift <= 3, `${factor.id} shifts implausibly far`);
     }
   });
 
   it('files every factor under a group that exists', () => {
-    const known = new Set(GROUPS.map((group) => group.id));
+    const known = new Set(GROUPS);
     for (const factor of FACTORS) {
       assert.ok(known.has(factor.group), `${factor.id} is in unknown group ${factor.group}`);
     }
@@ -137,15 +143,15 @@ describe('the assessment', () => {
 describe('the actions', () => {
   it('leads with leaving when the air is past the limit', () => {
     const list = actions(42, 85);
-    assert.match(list[0].title, /cooler air/i);
+    assert.equal(list[0].id, 'leave');
     assert.equal(list[0].tone, 'urgent');
   });
 
   it('tells you to switch the fan OFF when a fan would hurt', () => {
     const list = actions(47, 10);
-    const fanEntry = list.find((entry) => /fan/i.test(entry.title));
+    const fanEntry = list.find((entry) => /^fan/.test(entry.id));
 
-    assert.match(fanEntry.title, /off/i);
+    assert.equal(fanEntry.id, 'fanOff');
     assert.equal(fanEntry.tone, 'stop');
     assert.ok(
       list.indexOf(fanEntry) < 3,
@@ -155,35 +161,40 @@ describe('the actions', () => {
 
   it('tells you to USE the fan in humid heat above 35 °C', () => {
     const list = actions(38, 60);
-    const fanEntry = list.find((entry) => /fan/i.test(entry.title));
+    const fanEntry = list.find((entry) => /^fan/.test(entry.id));
 
-    assert.match(fanEntry.title, /helps/i);
-    assert.match(fanEntry.detail, /backwards/, 'and it should say the common rule is wrong');
+    assert.equal(fanEntry.id, 'fanOn');
+    assert.match(
+      en.actions.fanOnDetail,
+      /backwards/,
+      'and it should say the common rule is wrong'
+    );
   });
 
   it('never gives both fan instructions at once', () => {
     for (const [t, rh] of [[30, 50], [38, 60], [42, 20], [47, 10], [45, 80]]) {
-      const fans = actions(t, rh).filter((entry) => /fan/i.test(entry.title));
+      const fans = actions(t, rh).filter((entry) => /^fan/.test(entry.id));
       assert.ok(fans.length <= 1, `${t} °C / ${rh} % produced ${fans.length} fan entries`);
     }
   });
 
   it('raises stopping work to the top when work is what you are doing', () => {
     const list = actions(34, 55, ['exertion']);
-    const stop = list.findIndex((entry) => /stop the physical work/i.test(entry.title));
+    const stop = list.findIndex((entry) => entry.id === 'stopWork');
     assert.ok(stop >= 0 && stop <= 1, `stopping work ranked ${stop}`);
   });
 
   it('adds the drinking-schedule advice only for the group whose thirst is unreliable', () => {
-    assert.ok(!titles(actions(33, 55)).some((title) => /schedule/i.test(title)));
-    assert.ok(titles(actions(33, 55, ['age75'])).some((title) => /schedule/i.test(title)));
+    assert.ok(!ids(actions(33, 55)).includes('drink'));
+    assert.ok(ids(actions(33, 55, ['age75'])).includes('drink'));
   });
 
   it('names the emergency sign when things are dangerous', () => {
     const list = actions(39, 75);
-    const entry = list.find((item) => /sign that changes/i.test(item.title));
-    assert.match(entry.detail, /emergency/i);
-    assert.match(entry.detail, /stopped sweating/i);
+    const entry = list.find((item) => item.id === 'emergency');
+    assert.ok(entry, 'no emergency entry at all');
+    assert.match(en.actions.emergencyDetail, /emergency/i);
+    assert.match(en.actions.emergencyDetail, /stopped sweating/i);
   });
 
   it('does not raise an alarm on a pleasant day', () => {

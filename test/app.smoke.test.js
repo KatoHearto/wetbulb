@@ -73,6 +73,14 @@ function installDom(ids) {
     },
     querySelectorAll: () => [],
     createElement: () => new StubElement('created'),
+    // The static-text walk asks the document for hooks. There are none in this
+    // stub, so it finds nothing -- which is right: this test covers what the
+    // script renders, and the markup's own hooks are checked in their own test.
+    querySelectorAll: () => [],
+    // setLanguage stamps `lang` and `dir` here. Without it that line was dead
+    // code in every test run -- and it is the line the whole RTL layout hangs
+    // off, so it was exactly the wrong line to leave unexercised.
+    documentElement: new StubElement('html'),
   };
 
   globalThis.window = {};
@@ -81,10 +89,30 @@ function installDom(ids) {
 
 describe('the page renders', () => {
   let elements;
+  let languageModule;
 
   before(async () => {
     elements = installDom(idsInMarkup());
+
+    // Pin the language before app.js resolves one. Node 22 exposes the machine
+    // locale as `navigator.language`, so without this the page renders in
+    // whatever language the developer's OS is set to -- and the assertions
+    // below, which are about English copy, would pass or fail by geography.
+    // Measured: this machine reports de-DE and rendered the whole page in
+    // German; a GitHub runner reports en-US and would not have.
+    //
+    // Pinned through `?lang=`, not through setLanguage(): app.js resolves the
+    // language itself on import, so anything set beforehand would be
+    // overwritten. This also means the query-string path is exercised on
+    // every run rather than only in its own unit test.
+    globalThis.location = { search: '?lang=en' };
+
     await import('../app.js');
+    languageModule = await import('../src/i18n/index.js');
+  });
+
+  it('renders in the language that was set, not the machine\'s', () => {
+    assert.match(elements.get('readout').innerHTML, /Wet-bulb temperature/);
   });
 
   it('asks only for elements that exist in the markup', () => {
@@ -178,4 +206,35 @@ describe('the page renders', () => {
       assert.ok(element.listeners.size > 0, `#${id} has no handler attached`);
     }
   });
+
+  it('redraws every worded element when the language changes', () => {
+    // The switch calls setLanguage; setLanguage notifies; app.js rebuilds.
+    // Screenshots cannot cover this -- they only ever load one language --
+    // so the one path a user actually takes is checked here.
+    const { setLanguage } = languageModule;
+
+    const englishReadout = elements.get('readout').innerHTML;
+    const englishFactors = elements.get('factors').innerHTML;
+    assert.match(englishReadout, /Wet-bulb temperature/);
+
+    assert.equal(setLanguage('de', { remember: false }), true);
+
+    const german = elements.get('readout').innerHTML;
+    assert.match(german, /Feuchtkugeltemperatur/, 'the readout did not follow');
+    assert.match(german, /25,8/, 'and the decimal separator did not follow either');
+    assert.notEqual(german, englishReadout);
+    assert.notEqual(elements.get('factors').innerHTML, englishFactors);
+    assert.match(elements.get('actions').innerHTML, /[äöüß]/, 'the actions stayed English');
+
+    // Arabic flips the document, and the unit changes with it.
+    setLanguage('ar', { remember: false });
+    assert.equal(globalThis.document.documentElement.dir, 'rtl');
+    assert.equal(globalThis.document.documentElement.lang, 'ar');
+    assert.match(elements.get('readout').innerHTML, /°م/, 'the Arabic degree sign is missing');
+
+    setLanguage('en', { remember: false });
+    assert.equal(globalThis.document.documentElement.dir, 'ltr');
+    assert.equal(elements.get('readout').innerHTML, englishReadout, 'switching back is not lossless');
+  });
+
 });

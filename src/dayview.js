@@ -19,6 +19,7 @@
  * in it.
  */
 
+import { n, t } from './i18n/index.js';
 import { WET_BULB_LIMITS } from './psychro.js';
 
 const DAY = { width: 460, height: 230 };
@@ -115,7 +116,7 @@ export function renderDay(hours, { threshold, ventilation = null, nowHour = null
   );
   parts.push(
     `<text class="wb-threshold-label" x="${DAY_PAD.left + dayWidth}" ` +
-      `y="${round(toY(threshold)) - 4}" text-anchor="end">your threshold ${threshold.toFixed(1)}°</text>`
+      `y="${round(toY(threshold)) - 4}" text-anchor="end">${escape(t('day.thresholdLabel', { value: n(threshold, 1) }))}</text>`
   );
 
   // --- the measured wet-bulb curve, solid because it is measured -----------
@@ -130,7 +131,7 @@ export function renderDay(hours, { threshold, ventilation = null, nowHour = null
 
   parts.push(
     `<g class="wb-mark wb-mark-hot"><title>${escape(
-      `Hottest hour: ${pad2(hottest.hour)}:00, ${hottest.celsius.toFixed(1)} °C`
+      t('day.markHottest', { hour: `${pad2(hottest.hour)}:00`, temp: n(hottest.celsius, 1) })
     )}</title>` +
       `<line x1="${round(toX(hottest.hour))}" y1="${DAY_PAD.top + dayHeight}" ` +
       `x2="${round(toX(hottest.hour))}" y2="${round(toY(hottest.wetBulb))}" />` +
@@ -139,7 +140,7 @@ export function renderDay(hours, { threshold, ventilation = null, nowHour = null
 
   parts.push(
     `<g class="wb-mark wb-mark-worst"><title>${escape(
-      `Most dangerous hour: ${pad2(worst.hour)}:00, wet bulb ${worst.wetBulb.toFixed(1)} °C`
+      t('day.markWorst', { hour: `${pad2(worst.hour)}:00`, wetBulb: n(worst.wetBulb, 1) })
     )}</title>` +
       `<line x1="${round(toX(worst.hour))}" y1="${DAY_PAD.top + dayHeight}" ` +
       `x2="${round(toX(worst.hour))}" y2="${round(toY(worst.wetBulb))}" />` +
@@ -155,18 +156,17 @@ export function renderDay(hours, { threshold, ventilation = null, nowHour = null
 
   parts.push(
     `<text class="wb-axis" x="${DAY_PAD.left + dayWidth / 2}" y="${DAY.height - 4}" ` +
-      `text-anchor="middle">hour of day</text>`
+      `text-anchor="middle">${escape(t('day.axisHour'))}</text>`
   );
   parts.push(
     `<text class="wb-axis" transform="rotate(-90 10 ${DAY_PAD.top + dayHeight / 2})" ` +
-      `x="10" y="${DAY_PAD.top + dayHeight / 2}" text-anchor="middle">wet bulb °C</text>`
+      `x="10" y="${DAY_PAD.top + dayHeight / 2}" text-anchor="middle">${escape(t('day.axisWetBulb'))}</text>`
   );
 
   return (
     `<svg viewBox="0 0 ${DAY.width} ${DAY.height}" class="wb-chart-svg" role="img" ` +
     `aria-label="${escape(
-      `Wet-bulb temperature through the day. Hottest hour ${pad2(hottest.hour)}, ` +
-        `most dangerous hour ${pad2(worst.hour)}.`
+      t('day.aria', { hottest: pad2(hottest.hour), worst: pad2(worst.hour) })
     )}">${parts.join('')}</svg>`
   );
 }
@@ -205,8 +205,10 @@ export function renderNights(nights) {
 
     parts.push(
       `<g class="${classes}"><title>${escape(
-        `${night.date}: low ${Number.isFinite(night.minimum) ? `${night.minimum.toFixed(1)} °C` : 'unknown'}` +
-          `${night.tropical ? ' — no relief' : ''}`
+        t(night.tropical ? 'day.nightTooltipHot' : 'day.nightTooltip', {
+          date: night.date,
+          low: Number.isFinite(night.minimum) ? `${n(night.minimum, 1)} °C` : t('day.unknown'),
+        })
       )}</title>` +
         `<rect x="${round(x + 1)}" y="${padding.top}" width="${round(cellWidth - 2)}" ` +
         `height="${cellHeight}" /></g>`
@@ -219,17 +221,18 @@ export function renderNights(nights) {
     `y="${padding.top + cellHeight + 13}" text-anchor="${anchor}">${escape(text)}</text>`;
 
   parts.push(label(0, cells[0].date.slice(5), 'start'));
-  parts.push(label(nights.todayIndex, 'today', 'middle'));
+  parts.push(label(nights.todayIndex, t('day.today'), 'middle'));
   parts.push(label(cells.length - 1, cells.at(-1).date.slice(5), 'end'));
 
   parts.push(
-    `<text class="wb-axis" x="${padding.left}" y="13">nights below ${nights.threshold}°C give the body a chance</text>`
+    `<text class="wb-axis" x="${padding.left}" y="13">` +
+      `${escape(t('day.nightsCaption', { threshold: nights.threshold }))}</text>`
   );
 
   return (
     `<svg viewBox="0 0 ${NIGHTS.width} ${NIGHTS.height}" class="wb-chart-svg" role="img" ` +
     `aria-label="${escape(
-      `${nights.longest} consecutive nights without relief in this window.`
+      t('day.nightsAria', { count: nights.longest })
     )}">${parts.join('')}</svg>`
   );
 }

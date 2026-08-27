@@ -230,9 +230,6 @@ export function ventilationFromHours(hours, buildingId = 'medium', options = {})
       any: false,
       rows,
       source: 'measured',
-      summary:
-        'Outdoor air never drops far enough below the room today. No good hour to ' +
-        'ventilate — keep everything shut and shaded, and cool yourself instead.',
     };
   }
 
@@ -246,8 +243,9 @@ export function ventilationFromHours(hours, buildingId = 'medium', options = {})
     return distance(b.hour) > distance(a.hour) ? b : a;
   }).hour;
 
-  const pad = (hour) => `${String(hour % 24).padStart(2, '0')}:00`;
-
+  // The sentence this used to compose lives in the bundles as
+  // `day.windowSummary`. What is returned instead are the four numbers it was
+  // made of -- which is also what the day chart already needed.
   return {
     any: true,
     rows,
@@ -256,10 +254,6 @@ export function ventilationFromHours(hours, buildingId = 'medium', options = {})
     closesAt,
     bestHour: best.hour,
     bestGain: best.gain,
-    summary:
-      `Open everything from about ${pad(opensAt)} and shut it again by ` +
-      `${pad(closesAt + 1)}. The coldest air arrives around ${pad(best.hour)}, ` +
-      `${best.gain.toFixed(1)} °C below the room.`,
   };
 }
 

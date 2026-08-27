@@ -94,19 +94,11 @@ export function wetBulbAccuracy(celsius, relativeHumidity) {
   const inTemperature = celsius >= -20 && celsius <= 50;
   const inHumidity = relativeHumidity >= 5 && relativeHumidity <= 99;
 
-  if (inTemperature && inHumidity) {
-    return { level: 'good', note: 'within the range Stull fitted (error < ~1 °C)' };
-  }
-  if (!inHumidity && relativeHumidity < 5) {
-    return {
-      level: 'poor',
-      note: 'below 5 % humidity the fit drifts; treat this as indicative only',
-    };
-  }
-  return {
-    level: 'edge',
-    note: 'outside the fitted range — the value is an extrapolation',
-  };
+  // `level` is the whole answer. It keys `readout.accuracy*` in the language
+  // bundles; the sentence explaining each level lives there, in six languages.
+  if (inTemperature && inHumidity) return { level: 'good' };
+  if (!inHumidity && relativeHumidity < 5) return { level: 'poor' };
+  return { level: 'edge' };
 }
 
 // --- heat index ------------------------------------------------------------
@@ -240,29 +232,16 @@ export function fanVerdict(celsius, relativeHumidity) {
   const fanned = heatBalance(celsius, relativeHumidity, BODY.fanAir);
   const gain = fanned.net - still.net;
 
+  // Only the verdict is returned, not a sentence explaining it. The sentence
+  // exists in six languages under `actions.fanReason*`, keyed by this verdict,
+  // and a physics module has no business holding one of them.
   let verdict;
-  let reason;
-
-  if (gain > 20) {
-    verdict = 'helps';
-    reason =
-      'moving air carries away far more sweat than it brings heat in — the fan ' +
-      'is doing real work here';
-  } else if (gain > 0) {
-    verdict = 'marginal';
-    reason =
-      'the fan still helps, but barely; it is close to the point where the heat ' +
-      'it blows onto you cancels the evaporation it buys';
-  } else {
-    verdict = 'harmful';
-    reason =
-      'the air is hotter than your skin and your sweating is already at its ' +
-      'limit, so faster air only delivers heat to you — a fan makes this worse';
-  }
+  if (gain > 20) verdict = 'helps';
+  else if (gain > 0) verdict = 'marginal';
+  else verdict = 'harmful';
 
   return {
     verdict,
-    reason,
     gain,
     still: still.net,
     fanned: fanned.net,
