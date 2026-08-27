@@ -188,6 +188,32 @@
     </div>
   </section>
 
+  <!-- ===================== THE GLOBE ===================== -->
+  <section class="instrument" aria-labelledby="globe-heading">
+    <div class="instrument-head">
+      <h2 id="globe-heading">Where the heat lives</h2>
+      <p class="instrument-sub">
+        Not today's weather — the shape of the problem. Each dot is the wet-bulb
+        temperature a place reaches in a normal hot season, from three years of
+        reanalysis. Drag to turn, scroll to zoom. Look up a place above and the
+        globe goes there.
+      </p>
+    </div>
+
+    <div class="globe-layout">
+      <figure class="globe-frame">
+        <canvas id="globe" class="globe-canvas" width="640" height="640"
+                aria-label="A globe showing where wet-bulb temperature is structurally high"></canvas>
+        <figcaption class="globe-note" id="globe-note"></figcaption>
+      </figure>
+
+      <div class="globe-side">
+        <div class="globe-legend" id="globe-legend"></div>
+        <div class="globe-facts" id="globe-facts"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- ===================== MEASURES ===================== -->
   <section class="instrument" aria-labelledby="measures-heading">
     <div class="instrument-head">

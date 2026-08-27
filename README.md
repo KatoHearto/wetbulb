@@ -44,6 +44,89 @@ the point around the chart — and it tells you:
   conditions*, not a flat list of eight equal suggestions.
 - **When to open the windows**, modelled across the day for your building.
 
+## The globe, and the arithmetic that shaped it
+
+A globe you can turn and zoom, showing where wet-bulb temperature is
+structurally high. Drawn in **raw WebGL** — no Three.js, no library. That is
+about four hundred lines for a sphere, three matrices, two shaders and an
+orbit camera, against roughly 600 KB for the alternative, on a page whose
+promise is that it has no dependencies.
+
+### Why the zones are not live
+
+The obvious design is a live grid: fetch the world, colour it by today's wet
+bulb. It was measured and rejected, and the measurement is worth repeating
+because the documentation does not state it.
+
+**A bulk request counts per coordinate, not per request.** One request
+carrying 600 coordinates returned `200`, and the very next request — five
+coordinates — returned `429`. A single call had consumed the entire
+600-per-minute allowance.
+
+| | calls per visitor | visitors per day |
+|---|---|---|
+| the page without a globe | 1 | **10,000** |
+| a globe of 66 cities | 67 | 149 |
+| a globe as a 600-point grid | 601 | **16** |
+
+A live grid would have made the page unusable after sixteen people, on a tool
+whose purpose is to be there during a heat wave. Live zones would have cost
+98.5 % of everyone who could otherwise have used it.
+
+### What is drawn instead, and why it says more
+
+The question "where is it dangerous" is not really about today. The Ganges
+delta, the Punjab, the North China Plain and the Gulf are dangerous as a
+property of geography, not as a property of Tuesday. So the globe carries a
+**climatology**, computed once and shipped as data:
+
+- 408 land cells on a 6° grid
+- the **95th percentile** of hourly wet bulb across the hot season
+- three years of ERA5 reanalysis, May–Aug north of 15°S and Nov–Feb south
+- built by [`tools/build_climatology.py`](tools/build_climatology.py), which is
+  resumable and rate-limited to well under the free allowance
+
+The hottest cells it finds, with no geography told to it:
+
+```
+28.2 °C   22°N  90°E     the Ganges delta
+28.1 °C   34°N  72°E     the Punjab
+27.9 °C   28°N  72°E     Rajasthan
+27.8 °C   34°N 120°E     the North China Plain
+```
+
+That is the map the literature describes, arrived at from hourly temperature
+and humidity alone.
+
+Your own location, when you fetch it, is marked on that map — the one live
+point, in the structural context.
+
+### Two things the globe admits
+
+**Nothing on it reaches 29 °C, and that is not reassurance.** A 95th percentile
+across a whole season describes the weather a place has most summers, not its
+worst hour. Single hours go far higher; 35 °C wet bulb has been recorded on the
+Persian Gulf coast. The legend greys out the bands no cell reaches rather than
+letting a full-looking scale imply otherwise.
+
+**A 6° cell is about 650 km.** It averages a coastline with a plateau, a city
+with a field. The page says so under the globe.
+
+### Found by looking at it
+
+The first version drew each cell as a point sprite and every cell came out with
+a **black triangle punched through it**. A 6° patch drawn as two flat triangles
+sags 1 − cos(3°) ≈ 0.0014 below the sphere at its centre; the cells were lifted
+by 0.0015, leaving thirteen ten-thousandths of clearance, and the faceted sphere
+came through. Radii are staggered now — sphere 1.0, zones 1.006, coastline
+1.012, marker 1.03.
+
+The second version had a colour ramp whose two cool bands differed by less than
+a nuance. Most of the planet's land sits in those bands, so the dangerous fifth
+was hard to find. The ramp holds the cool end back and steps up sharply at
+25 °C, where a climate stops being uncomfortable and starts constraining what a
+body can do outdoors.
+
 ## Real weather, and what it adds
 
 Point it at a place and it fetches hourly data from
@@ -151,7 +234,7 @@ implementation's own output — a test that records what the code said proves
 only that the code has not changed.
 
 ```bash
-node --test        # 140 tests, Node 18+, no dependencies
+node --test        # 158 tests, Node 18+, no dependencies
 ```
 
 Among them, the anchors that would catch a wrong scale:
@@ -217,6 +300,9 @@ be recovering from. Live Cologne data showed 28.2 °C at midnight and 23.6 °C a
   production tenfold.
 - **The daily curve is a model**, reconstructed from two numbers. It is drawn
   dashed for that reason.
+- **The globe is a climatology, not a forecast.** It shows where heat is a
+  standing property of a place. Today's weather is the point you fetch, not the
+  colours underneath it.
 - **The forecast is a forecast.** Open-Meteo is a model, not a sensor on your
   street. The indoor curve is a model on top of that, and the page marks which
   is which.

@@ -1,6 +1,8 @@
 import * as chart from './src/chart.js';
 import * as dayChart from './src/daychart.js';
 import * as dayView from './src/dayview.js';
+import { LEGEND as GLOBE_LEGEND, colourFor, createGlobe } from './src/globe.js';
+import { CLIMATOLOGY, CLIMATOLOGY_META } from './src/climatology.js';
 import { analyse } from './src/forecast.js';
 import { WeatherError, currentPosition, fetchForecast, searchPlace } from './src/weather.js';
 import {
@@ -381,6 +383,9 @@ async function loadWeather(latitude, longitude, label) {
       syncFactorBoxes();
     }
 
+    // Take the globe to the place, so the map and the numbers agree.
+    globe?.focus(latitude, longitude);
+
     const stamp = state.forecast.today;
     setStatus(
       `<strong>${escape(label)}</strong> · ${escape(state.forecast.place.timezone)} · ` +
@@ -400,6 +405,103 @@ function syncFactorBoxes() {
   for (const box of $('factors').querySelectorAll?.('[data-factor]') ?? []) {
     box.checked = state.factors.has(box.dataset.factor);
   }
+}
+
+// ---------------------------------------------------------------- globe ----
+
+let globe = null;
+
+/**
+ * Start the globe, or say plainly why there is no globe.
+ *
+ * WebGL is missing or blocked often enough — old hardware, locked-down
+ * browsers, remote desktops — that an empty rectangle would be a real
+ * outcome for real people. It gets a sentence instead.
+ */
+function startGlobe() {
+  const canvas = $('globe');
+
+  try {
+    globe = createGlobe(canvas, { latitude: 22, longitude: 58 });
+  } catch (error) {
+    canvas.replaceWith?.(canvas);
+    $('globe-note').textContent =
+      'This browser cannot draw the globe (WebGL is unavailable). ' +
+      'Everything else on the page works without it.';
+    $('globe-note').className = 'globe-note globe-note-error';
+    return;
+  }
+
+  // Mark the bands no cell reaches. Showing a full scale is right — it is
+  // what the colours mean — but leaving the reader to assume every band is
+  // populated would overstate what the data says.
+  const present = new Set(CLIMATOLOGY.map((cell) => colourFor(cell[2]).join(',')));
+
+  $('globe-legend').innerHTML = GLOBE_LEGEND.map((entry) => {
+    const used = present.has(entry.colour.join(','));
+    return (
+      `<div class="globe-key${used ? '' : ' globe-key-empty'}">` +
+      `<span class="globe-swatch" style="background:${rgb(entry.colour)}"></span>` +
+      `<span class="globe-key-label">${escape(entry.label)}</span>` +
+      `<span class="globe-key-note">${escape(used ? entry.note : `${entry.note} — no cell here`)}</span>` +
+      `</div>`
+    );
+  }).join('');
+
+  renderGlobeFacts();
+
+  $('globe-note').textContent =
+    `${CLIMATOLOGY_META.cells} land cells at ${CLIMATOLOGY_META.step}°, ` +
+    `${CLIMATOLOGY_META.percentile}th percentile wet bulb, ` +
+    `${CLIMATOLOGY_META.years[0]}–${CLIMATOLOGY_META.years.at(-1)}.`;
+}
+
+const rgb = (colour) =>
+  `rgb(${colour.map((channel) => Math.round(channel * 255)).join(',')})`;
+
+/**
+ * The three sentences the map is worth, computed from the shipped data rather
+ * than written down — so they cannot drift away from what is drawn.
+ */
+function renderGlobeFacts() {
+  const values = CLIMATOLOGY.map((cell) => cell[2]);
+  const past31 = CLIMATOLOGY.filter((cell) => cell[2] >= 31);
+  const past29 = CLIMATOLOGY.filter((cell) => cell[2] >= 29);
+  const worst = CLIMATOLOGY.reduce((a, b) => (b[2] > a[2] ? b : a));
+
+  const hot = CLIMATOLOGY.filter((cell) => cell[2] >= 26);
+
+  const facts = [
+    [
+      `${hot.length} of ${CLIMATOLOGY.length} land cells sit above 26 °C`,
+      `and they are not scattered: the Ganges delta, the Punjab, the North China ` +
+        `Plain, the Gulf. Roughly a fifth of humanity lives inside that handful of ` +
+        `cells, which is the whole reason this map is worth drawing.`,
+    ],
+    [
+      `Nothing here reaches ${past29.length > 0 ? '31' : '29'} °C — and that is not reassurance`,
+      `This is the 95th percentile across a whole hot season, so it describes the ` +
+        `weather a place has most summers, not its worst hour. Single hours go far ` +
+        `higher: 35 °C wet bulb has been recorded on the Persian Gulf coast. A cell ` +
+        `at 28 °C spends real hours well past 31.`,
+    ],
+    [
+      `Hottest cell: ${worst[2].toFixed(1)} °C at ` +
+        `${Math.abs(worst[0]).toFixed(0)}° ${worst[0] >= 0 ? 'N' : 'S'}, ` +
+        `${Math.abs(worst[1]).toFixed(0)}° ${worst[1] >= 0 ? 'E' : 'W'}`,
+      `Each cell is ${CLIMATOLOGY_META.step}° across — about 650 km — so it averages ` +
+        `a coastline with a plateau and a city with a field. Real places inside it ` +
+        `diverge in both directions.`,
+    ],
+  ];
+
+  $('globe-facts').innerHTML = facts
+    .map(
+      ([title, detail]) =>
+        `<div class="globe-fact"><p class="globe-fact-title">${escape(title)}</p>` +
+        `<p class="globe-fact-detail">${escape(detail)}</p></div>`
+    )
+    .join('');
 }
 
 // ---------------------------------------------------------------- draw ----
@@ -563,4 +665,5 @@ $('here').addEventListener('click', async () => {
   }
 });
 
+startGlobe();
 setConditions(state.celsius, state.humidity);
