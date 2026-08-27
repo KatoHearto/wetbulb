@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      # No argument: passing "test/*.test.js" makes Node resolve the glob
+      # itself, which it only learned to do in 21.
+      - run: node --test
+
+  anchors:
+    name: the physical anchors must hold
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # A second, independent statement of the properties the whole tool rests
+      # on, written here rather than only in the suite. If a refactor ever
+      # quietly changes the scale, this job is the one that says so out loud.
+      - name: Wet bulb equals air temperature at saturation
+        run: |
+          node --input-type=module -e "
+            import { wetBulb } from './src/psychro.js';
+            for (const t of [10, 20, 30, 35, 40, 45]) {
+              if (wetBulb(t, 100) !== t) {
+                console.error(\`at \${t} °C and 100 % humidity the wet bulb read \${wetBulb(t, 100)}\`);
+                process.exit(1);
+              }
+            }
+            console.log('saturation anchor holds at every checked temperature');
+          "
+
+      - name: Humid heat outranks hotter dry heat
+        run: |
+          node --input-type=module -e "
+            import { wetBulb } from './src/psychro.js';
+            const dry = wetBulb(45, 10);
+            const humid = wetBulb(35, 90);
+            console.log(\`45 °C dry -> \${dry.toFixed(1)}, 35 °C humid -> \${humid.toFixed(1)}\`);
+            if (humid <= dry) {
+              console.error('the central claim of this tool no longer holds');
+              process.exit(1);
+            }
+          "
+
+      - name: The fan verdict still disagrees with the popular rule
+        run: |
+          node --input-type=module -e "
+            import { fanVerdict } from './src/psychro.js';
+            const humid = fanVerdict(40, 50).verdict;
+            const dry = fanVerdict(47, 10).verdict;
+            console.log(\`40/50 -> \${humid}, 47/10 -> \${dry}\`);
+            if (humid !== 'helps' || dry !== 'harmful') {
+              console.error('the measured fan experiments are no longer reproduced');
+              process.exit(1);
+            }
+          "
+
+  deploy:
+    name: Publish to GitHub Pages
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [test, anchors]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          # The repository is the site. No build step means nothing can go
+          # wrong between the tested source and the published page.
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>wetbulb — the temperature that decides whether you can cool down</title>
+<meta name="description" content="Air temperature does not tell you whether heat is dangerous. Wet-bulb temperature does. Find out where you stand, whether a fan helps, and when to open the windows. Works offline.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🌡️</text></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="masthead-grid">
+      <div>
+        <h1>wetbulb</h1>
+        <p class="lede">
+          Heat kills more people than any other kind of weather — and the number
+          in every warning is the wrong one.
+        </p>
+        <p class="blurb">
+          Air temperature says almost nothing about whether a body can shed heat.
+          <strong>Wet-bulb temperature</strong> decides it. At 45&nbsp;°C in dry
+          desert air a healthy person sweats and survives. At 35&nbsp;°C in humid
+          air they cannot, because there is nowhere for the sweat to go.
+        </p>
+      </div>
+      <aside class="masthead-note">
+        <p class="mono-label">what this is</p>
+        <p>
+          A calculator and a set of decisions, not a warning service. It knows
+          nothing about where you are — you tell it the numbers.
+        </p>
+        <p class="privacy">Runs entirely in this browser. No account, no network.</p>
+      </aside>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===================== THE STATE CHART ===================== -->
+  <section class="instrument" aria-labelledby="chart-heading">
+    <div class="instrument-head">
+      <h2 id="chart-heading">Where this air puts you</h2>
+      <p class="instrument-sub">
+        Drag the point, or use the fields. Every line is computed from the same
+        physics as the numbers beside it.
+      </p>
+    </div>
+
+    <div class="chart-layout">
+      <figure class="chart-frame">
+        <div id="chart" class="chart-surface"></div>
+        <figcaption class="chart-legend" id="chart-legend"></figcaption>
+      </figure>
+
+      <div class="readout" id="readout"></div>
+    </div>
+
+    <div class="controls">
+      <label class="control">
+        <span class="control-label">
+          Air temperature
+          <output id="temp-out" class="control-value">32.0 °C</output>
+        </span>
+        <input type="range" id="temp" min="15" max="50" step="0.5" value="32">
+      </label>
+
+      <label class="control">
+        <span class="control-label">
+          Relative humidity
+          <output id="humidity-out" class="control-value">60 %</output>
+        </span>
+        <input type="range" id="humidity" min="0" max="100" step="1" value="60">
+      </label>
+
+      <div class="control control-presets">
+        <span class="control-label">Or try a real one</span>
+        <div class="preset-row" id="presets"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== WHO ===================== -->
+  <section class="instrument" aria-labelledby="who-heading">
+    <div class="instrument-head">
+      <h2 id="who-heading">Who is in this air</h2>
+      <p class="instrument-sub">
+        The published limits describe young, healthy, acclimatised people at
+        rest — which is not who dies in heat waves. Each of these moves the
+        threshold by a stated number of degrees.
+      </p>
+    </div>
+    <div id="factors" class="factor-groups"></div>
+    <p class="shift-summary" id="shift-summary"></p>
+  </section>
+
+  <!-- ===================== ACTIONS ===================== -->
+  <section class="instrument" aria-labelledby="actions-heading">
+    <div class="instrument-head">
+      <h2 id="actions-heading">What to do, in order</h2>
+      <p class="instrument-sub">
+        Ranked by what each one is worth <em>in these conditions</em>. The first
+        line is the one that matters most.
+      </p>
+    </div>
+    <ol class="actions" id="actions"></ol>
+  </section>
+
+  <!-- ===================== THE DAY ===================== -->
+  <section class="instrument" aria-labelledby="day-heading">
+    <div class="instrument-head">
+      <h2 id="day-heading">When to open the windows</h2>
+      <p class="instrument-sub">
+        The mistake almost everyone makes. An open window in the afternoon is a
+        heat source. This is a <strong>model</strong> of the day from a high and
+        a low — drawn as a dashed line, because it is not a measurement.
+      </p>
+    </div>
+
+    <div class="day-layout">
+      <figure class="chart-frame">
+        <div id="day-chart" class="chart-surface"></div>
+        <figcaption class="chart-legend" id="day-legend"></figcaption>
+      </figure>
+
+      <div class="day-side">
+        <p class="window-summary" id="window-summary"></p>
+
+        <div class="day-controls">
+          <label class="control control-compact">
+            <span class="control-label">
+              Today's low
+              <output id="low-out" class="control-value">18 °C</output>
+            </span>
+            <input type="range" id="low" min="5" max="35" step="1" value="18">
+          </label>
+
+          <label class="control control-compact">
+            <span class="control-label">
+              Today's high
+              <output id="high-out" class="control-value">34 °C</output>
+            </span>
+            <input type="range" id="high" min="15" max="50" step="1" value="34">
+          </label>
+
+          <fieldset class="building">
+            <legend class="control-label">Your building</legend>
+            <div id="buildings"></div>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MEASURES ===================== -->
+  <section class="instrument" aria-labelledby="measures-heading">
+    <div class="instrument-head">
+      <h2 id="measures-heading">What actually cools a room</h2>
+      <p class="instrument-sub">
+        Most heat advice is a flat list in which "close the curtains" sits beside
+        "shade the window from outside", as if they were comparable. They differ
+        by about five times.
+      </p>
+    </div>
+    <div class="measures" id="measures"></div>
+  </section>
+
+  <!-- ===================== HONESTY ===================== -->
+  <section class="instrument instrument-quiet" aria-labelledby="limits-heading">
+    <div class="instrument-head">
+      <h2 id="limits-heading">What this cannot do</h2>
+    </div>
+    <div class="limits">
+      <div class="limit">
+        <p class="mono-label">not a doctor</p>
+        <p>
+          Nothing here is medical advice, and the thresholds are calibrated to
+          published physiology, not to you. If someone is confused, agitated, or
+          has stopped sweating in heat, that is an emergency — call, do not
+          calculate.
+        </p>
+      </div>
+      <div class="limit">
+        <p class="mono-label">not a forecast</p>
+        <p>
+          It has no idea what the weather is. You supply the numbers; it tells
+          you what they mean. Official heat warnings know things this does not,
+          including how long the heat has already lasted.
+        </p>
+      </div>
+      <div class="limit">
+        <p class="mono-label">two limits, not one</p>
+        <p>
+          35&nbsp;°C wet bulb is the <em>theoretical</em> limit. Around
+          31&nbsp;°C is where strain has actually been <em>measured</em> on young
+          healthy subjects. Quoting only the 35 makes the danger look four
+          degrees further away than it is.
+        </p>
+      </div>
+      <div class="limit">
+        <p class="mono-label">shade, and standing still</p>
+        <p>
+          Every number here assumes shade and rest. Direct sun adds the
+          equivalent of several degrees; physical work can multiply your heat
+          production tenfold.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <p>
+    <a href="https://github.com/KatoHearto/wetbulb">Source, sources and test suite on GitHub</a>
+    · MIT · built to be checked, not believed
+  </p>
+</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
