@@ -1,6 +1,16 @@
 import * as chart from './src/chart.js';
 import * as dayChart from './src/daychart.js';
-import { BUILDINGS, MEASURES, rankedMeasures } from './src/cooling.js';
+import * as dayView from './src/dayview.js';
+import { analyse } from './src/forecast.js';
+import { WeatherError, currentPosition, fetchForecast, searchPlace } from './src/weather.js';
+import {
+  BUILDINGS,
+  BUILDINGS_BY_ID,
+  MEASURES,
+  NEVER_OPEN_ABOVE,
+  rankedMeasures,
+  requiredGain,
+} from './src/cooling.js';
 import { FACTORS, GROUPS, actions, assess } from './src/risk.js';
 import { PRESETS } from './src/presets.js';
 import { WET_BULB_LIMITS, dewPoint, fanVerdict, heatIndex, wetBulbAccuracy } from './src/psychro.js';
@@ -19,7 +29,14 @@ const state = {
   low: 18,
   high: 34,
   building: 'medium',
+  // Null until the user asks for real weather. Everything below has to work
+  // without it, so this is an addition and never a dependency.
+  forecast: null,
+  raw: null,
+  place: null,
 };
+
+const COOLING = { requiredGain, NEVER_OPEN_ABOVE, BUILDINGS_BY_ID };
 
 // --------------------------------------------------------------- chrome ----
 
@@ -184,17 +201,205 @@ function renderShiftSummary() {
     `make someone three times as fragile.`;
 }
 
-function renderDay() {
+function renderDay(threshold) {
   const hour = new Date().getHours();
-  const result = dayChart.render(state.low, state.high, state.building, hour);
 
+  // Measured hours when we have them, the reconstructed curve when we do not,
+  // and the caption says which — that boundary is this app's main promise.
+  if (state.forecast) {
+    const { todayHours, ventilation, nights } = state.forecast;
+    $('day-chart').innerHTML =
+      dayView.renderDay(todayHours, { threshold, ventilation, nowHour: hour }) +
+      dayView.renderNights(nights);
+
+    $('day-sub').innerHTML =
+      'Measured hourly values for this place. The <strong>large marker</strong> is ' +
+      'the most dangerous hour, the small one the hottest — they are rarely the ' +
+      'same hour, and the gap is the reason this tool exists.';
+
+    $('window-summary').innerHTML = ventilation.any
+      ? escape(ventilation.summary).replace(/(\d{2}:00)/g, '<strong>$1</strong>')
+      : escape(ventilation.summary ?? 'Not enough hourly data to judge ventilation.');
+    $('day-legend').innerHTML = measuredLegend();
+    return;
+  }
+
+  const result = dayChart.render(state.low, state.high, state.building, hour);
   $('day-chart').innerHTML = result.svg;
   $('window-summary').innerHTML = result.window.any
-    ? escape(result.window.summary).replace(
-        /(\d{2}:00)/g,
-        '<strong>$1</strong>'
-      )
+    ? escape(result.window.summary).replace(/(\d{2}:00)/g, '<strong>$1</strong>')
     : escape(result.window.summary);
+}
+
+function measuredLegend() {
+  return (
+    '<span class="legend-key"><span class="legend-swatch" style="border-color:var(--hot);border-top-width:2px"></span>wet bulb (measured)</span>' +
+    '<span class="legend-key"><span class="legend-swatch" style="border-color:var(--warm);border-top-style:dotted"></span>your threshold</span>' +
+    '<span class="legend-key"><span class="legend-swatch" style="border-top-width:8px;border-color:color-mix(in srgb, var(--cool) 30%, transparent)"></span>worth opening up</span>' +
+    '<span class="legend-key"><span class="legend-swatch" style="border-top-width:8px;border-color:color-mix(in srgb, var(--critical) 45%, transparent)"></span>past your threshold</span>'
+  );
+}
+
+// -------------------------------------------------------------- findings ----
+
+/**
+ * What live data adds that two sliders cannot.
+ *
+ * Each block states its own basis. A finding whose provenance is invisible is
+ * indistinguishable from one the app invented, and this app's whole argument
+ * is that you can check it.
+ */
+function renderFindings() {
+  const container = $('findings');
+
+  if (!state.forecast) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const { peak, nights, acclimatisation: acc } = state.forecast;
+  const blocks = [];
+
+  // --- 1. the hour that is actually worst ---------------------------------
+  if (peak) {
+    const gap = Math.abs(peak.offsetHours);
+    const direction = peak.offsetHours < 0 ? 'earlier' : 'later';
+
+    blocks.push(
+      finding(
+        peak.coincide ? 'The peaks line up today' : `The worst hour is ${gap} h ${direction} than the hottest`,
+        peak.coincide
+          ? `Today the hottest hour and the most dangerous hour both fall at ` +
+            `${hhmm(peak.worst.hour)}. That is the exception, not the rule.`
+          : `The thermometer peaks at ${hhmm(peak.hottest.hour)} with ` +
+            `${peak.hottest.celsius.toFixed(1)} °C. But the air is hardest on a body at ` +
+            `${hhmm(peak.worst.hour)}, when it is ${peak.worst.celsius.toFixed(1)} °C — ` +
+            `${(peak.hottest.celsius - peak.worst.celsius).toFixed(1)} °C cooler and ` +
+            `${peak.worst.humidity} % humid. Wet bulb ${peak.worst.wetBulb.toFixed(1)} ` +
+            `against ${peak.hottest.wetBulb.toFixed(1)}.`,
+        peak.coincide ? 'flat' : 'strong',
+        'hourly forecast'
+      )
+    );
+  }
+
+  // --- 2. nights that give nothing back ------------------------------------
+  if (nights.current > 0 || nights.ahead > 0) {
+    const total = nights.current + nights.ahead;
+    blocks.push(
+      finding(
+        `${nights.current} night${nights.current === 1 ? '' : 's'} without relief` +
+          (nights.ahead > 0 ? `, ${nights.ahead} more coming` : ''),
+        `The night is when a body unloads the heat it took on during the day. ` +
+          `Above ${nights.threshold} °C it stops doing that. Heat waves rarely kill ` +
+          `on the first day — they kill on the third and fourth, and this run is ` +
+          `${total} long.`,
+        total >= 3 ? 'strong' : 'flat',
+        'daily minima'
+      )
+    );
+  } else if (nights.nights.length > 0) {
+    blocks.push(
+      finding(
+        'The nights are still cooling down',
+        `Every night in this window drops below ${nights.threshold} °C, so the body ` +
+          'gets its chance to recover. That is the single biggest thing separating ' +
+          'an uncomfortable week from a dangerous one.',
+        'good',
+        'daily minima'
+      )
+    );
+  }
+
+  // --- 3. acclimatisation, answered ----------------------------------------
+  if (acc.known) {
+    blocks.push(
+      finding(
+        acc.unacclimatised
+          ? `This is ${acc.difference.toFixed(1)} °C hotter than anything last week`
+          : 'Your body has seen this heat before',
+        acc.unacclimatised
+          ? `Today reaches ${acc.todayMax.toFixed(1)} °C; the warmest day of the past ` +
+            `${acc.days} was ${acc.warmestRecent.toFixed(1)} °C. Acclimatisation takes ` +
+            'one to two weeks, which is why the first heat wave of a summer is ' +
+            'reliably the deadliest — at temperatures the same people shrug off in August.'
+          : `Today reaches ${acc.todayMax.toFixed(1)} °C and last week already got to ` +
+            `${acc.warmestRecent.toFixed(1)} °C. Adapted people sweat sooner and lose ` +
+            'less salt doing it.',
+        acc.unacclimatised ? 'strong' : 'good',
+        'past 7 days'
+      )
+    );
+  }
+
+  container.innerHTML = blocks.join('');
+}
+
+function finding(title, detail, tone, source) {
+  return (
+    `<article class="finding finding-${escape(tone)}">` +
+    `<p class="finding-source">${escape(source)}</p>` +
+    `<h3 class="finding-title">${escape(title)}</h3>` +
+    `<p class="finding-detail">${escape(detail)}</p>` +
+    `</article>`
+  );
+}
+
+const hhmm = (hour) => `${String(hour).padStart(2, '0')}:00`;
+
+// -------------------------------------------------------------- location ----
+
+function setStatus(html, kind = 'info') {
+  $('where-status').className = `where-status where-${kind}`;
+  $('where-status').innerHTML = html;
+}
+
+async function loadWeather(latitude, longitude, label) {
+  setStatus(`<span class="spin">Fetching hourly weather for ${escape(label)}…</span>`, 'busy');
+
+  try {
+    const data = await fetchForecast(latitude, longitude);
+    state.forecast = analyse(data, state.building, COOLING);
+    // Kept because ventilation depends on the building, which can change
+    // after the fetch — and analyse() needs the raw response, not its output.
+    state.raw = data;
+    state.place = { label, latitude, longitude, timezone: data.timezone };
+
+    const now = state.forecast.current;
+    if (now) {
+      // Move the sliders to the real reading, so the chart above shows the
+      // actual air rather than a leftover guess.
+      setConditions(now.celsius, now.humidity);
+    }
+
+    // Acclimatisation is now known rather than asked, so the tick box sets
+    // itself — and unsets itself, which matters more.
+    const acc = state.forecast.acclimatisation;
+    if (acc.known) {
+      if (acc.unacclimatised) state.factors.add('unacclimatised');
+      else state.factors.delete('unacclimatised');
+      syncFactorBoxes();
+    }
+
+    const stamp = state.forecast.today;
+    setStatus(
+      `<strong>${escape(label)}</strong> · ${escape(state.forecast.place.timezone)} · ` +
+        `${escape(stamp)}<br>` +
+        `<span class="where-detail">Coordinates sent: ${latitude.toFixed(2)}, ${longitude.toFixed(2)}. ` +
+        `Nothing else left this browser.</span>`,
+      'ok'
+    );
+    draw();
+  } catch (error) {
+    const message = error instanceof WeatherError ? error.message : String(error);
+    setStatus(escape(message), 'error');
+  }
+}
+
+function syncFactorBoxes() {
+  for (const box of $('factors').querySelectorAll?.('[data-factor]') ?? []) {
+    box.checked = state.factors.has(box.dataset.factor);
+  }
 }
 
 // ---------------------------------------------------------------- draw ----
@@ -208,7 +413,8 @@ function draw() {
   });
   renderActions();
   renderShiftSummary();
-  renderDay();
+  renderFindings();
+  renderDay(result.threshold);
   attachDrag();
 }
 
@@ -327,7 +533,34 @@ $('high').addEventListener('input', (event) => {
 $('buildings').addEventListener('change', (event) => {
   if (event.target.name !== 'building') return;
   state.building = event.target.value;
-  renderDay();
+  if (state.raw) {
+    state.forecast = analyse(state.raw, state.building, COOLING);
+  }
+  draw();
+});
+
+$('place-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const query = $('place').value.trim();
+  if (!query) return;
+
+  setStatus('<span class="spin">Looking up the place…</span>', 'busy');
+  try {
+    const [best] = await searchPlace(query);
+    await loadWeather(best.latitude, best.longitude, best.label);
+  } catch (error) {
+    setStatus(escape(error instanceof WeatherError ? error.message : String(error)), 'error');
+  }
+});
+
+$('here').addEventListener('click', async () => {
+  setStatus('<span class="spin">Asking the browser where you are…</span>', 'busy');
+  try {
+    const position = await currentPosition();
+    await loadWeather(position.latitude, position.longitude, 'your location');
+  } catch (error) {
+    setStatus(escape(error instanceof WeatherError ? error.message : String(error)), 'error');
+  }
 });
 
 setConditions(state.celsius, state.humidity);

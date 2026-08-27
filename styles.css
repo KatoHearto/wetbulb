@@ -563,3 +563,121 @@ footer a { color: var(--accent); }
   *, *::before, *::after { transition: none !important; animation: none !important; }
   .factor-why { max-height: none; opacity: 1; }
 }
+
+/* ------------------------------------------------------- location + live ---- */
+
+.instrument-first { border-top: 0; padding-top: var(--s5); }
+.instrument-first::before, .instrument-first::after { display: none; }
+
+.where {
+  display: grid;
+  grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+  gap: var(--s5);
+  align-items: start;
+}
+@media (max-width: 46rem) { .where { grid-template-columns: 1fr; gap: var(--s4); } }
+
+.place-form { display: grid; gap: var(--s2); }
+.place-row { display: flex; gap: var(--s2); }
+.place-row input { flex: 1 1 auto; min-width: 0; }
+.place-row button { flex: 0 0 auto; }
+.preset-wide { width: 100%; text-align: center; padding: var(--s2); }
+
+input[type="text"] {
+  width: 100%;
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--line-bright);
+  border-radius: 0;
+  background: var(--bg-sunken);
+  color: var(--ink);
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+input[type="text"]::placeholder { color: var(--ink-faint); }
+
+.where-status {
+  min-height: 3rem;
+  padding-left: var(--s4);
+  border-left: 2px solid var(--line-bright);
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+.where-status:empty { border-left-color: transparent; }
+.where-ok { border-left-color: var(--cool); }
+.where-error { border-left-color: var(--hot); color: var(--hot); }
+.where-busy { border-left-color: var(--temperate); }
+.where-detail {
+  display: block;
+  margin-top: var(--s1);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+.spin { font-family: var(--mono); font-size: 0.85rem; }
+
+/* --- findings: what live data adds ---------------------------------------- */
+
+.findings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: var(--s4);
+  margin-top: var(--s5);
+}
+.findings:empty { margin-top: 0; }
+
+.finding {
+  border-top: 2px solid var(--line-bright);
+  padding-top: var(--s3);
+}
+.finding-strong { border-top-color: var(--hot); }
+.finding-good { border-top-color: var(--cool); }
+.finding-flat { border-top-color: var(--line-bright); }
+
+.finding-source {
+  margin: 0 0 var(--s2);
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.finding-title { margin: 0 0 var(--s2); font-size: 1rem; font-weight: 600; line-height: 1.35; }
+.finding-strong .finding-title { color: var(--hot); }
+.finding-detail { margin: 0; font-size: 0.87rem; color: var(--ink-soft); }
+
+/* --- the measured day ------------------------------------------------------ */
+
+.wb-wetbulb-curve {
+  fill: none;
+  stroke: var(--hot);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+.wb-over-threshold { fill: var(--critical); opacity: 0.28; }
+
+.wb-threshold-line {
+  stroke: var(--warm);
+  stroke-width: 1.2;
+  stroke-dasharray: 1 2.5;
+  stroke-linecap: round;
+}
+.wb-threshold-label {
+  fill: var(--warm);
+  font-family: var(--mono);
+  font-size: 7px;
+}
+
+.wb-mark line { stroke-width: 0.7; }
+.wb-mark-hot line { stroke: var(--ink-faint); stroke-dasharray: 2 2; }
+.wb-mark-hot circle { fill: var(--bg-panel); stroke: var(--ink-soft); stroke-width: 1.2; }
+.wb-mark-worst line { stroke: var(--hot); }
+.wb-mark-worst circle { fill: var(--hot); stroke: var(--bg-panel); stroke-width: 1.5; }
+
+/* --- nights, as a run of cells -------------------------------------------- */
+
+.wb-night rect { stroke: var(--bg-panel); stroke-width: 1; }
+.wb-night-cool rect { fill: var(--cool); opacity: 0.35; }
+.wb-night-hot rect { fill: var(--critical); opacity: 0.75; }
+.wb-night-unknown rect { fill: var(--line-bright); opacity: 0.5; }
+.wb-night-today rect { stroke: var(--ink); stroke-width: 1.5; }

@@ -6,7 +6,7 @@
 
 **Heat kills more people than any other kind of weather — and the number in every warning is the wrong one.**
 
-→ **[Open it](https://katohearto.github.io/wetbulb/)** — no install, no account, no network after the page loads.
+→ **[Open it](https://katohearto.github.io/wetbulb/)** — no install, no account. Works with no network at all; ask it for real weather and it sends nothing but coordinates.
 
 ---
 
@@ -43,6 +43,60 @@ the point around the chart — and it tells you:
 - **What to do, in order.** Ranked by what each action is worth *in these
   conditions*, not a flat list of eight equal suggestions.
 - **When to open the windows**, modelled across the day for your building.
+
+## Real weather, and what it adds
+
+Point it at a place and it fetches hourly data from
+[Open-Meteo](https://open-meteo.com) — no key, no account, no tracking. The
+sliders keep working with no network at all; the fetch is an addition, never a
+dependency.
+
+Three findings exist only once there are hours and days to look across. Each
+was measured before it was built, because a feature that turns out to say
+nothing should be dropped rather than shipped.
+
+**1. The most dangerous hour is not the hottest hour.**
+
+Humidity peaks at a different time of day than temperature, so the wet bulb
+does too. Measured across seven cities:
+
+| | hottest | most dangerous | offset |
+|---|---|---|---|
+| Delhi | 16:00 | 10:00 | **−6 h** |
+| Tokyo | 12:00 | 03:00 | **−9 h** |
+| Miami | 14:00 | 11:00 | −3 h |
+| Cologne | 17:00 | 17:00 | 0 |
+
+Six of seven differed, by four hours on average. Somebody who steps out at ten
+because "it's not hot yet" walks into the worst hour of the day. The chart
+marks both peaks, with different weights, so the gap is visible rather than
+asserted — and when they do coincide, as in Cologne, it says that instead.
+
+**2. Nights that never cool down.**
+
+A heat wave rarely does its worst on day one. The damage accumulates over the
+third and fourth, once the night has stopped letting a body unload what it took
+on. A run of nights above 20 °C is plain in a forecast and invisible in a
+thermometer reading. Delhi, measured: eight behind, six ahead.
+
+**3. Acclimatisation stops being a question.**
+
+The tool used to *ask* "is this one of the first hot days of the year?" With the
+past week in hand it answers instead — Cologne came in **5.0 °C above the
+warmest day of its own previous week**, and the factor set itself. Adaptation
+takes one to two weeks, which is why the first heat wave of a summer is
+reliably the most dangerous.
+
+### What leaves your browser
+
+A latitude and longitude rounded to two decimals (about 1 km), and a place name
+if you type one. Nothing else, and nothing at all until you press a button. The
+page says so where you can see it, and the status line repeats the exact
+coordinates it sent.
+
+The old claim on this page was "no account, no network". That stopped being true
+when this feature existed, so the claim changed rather than the behaviour being
+quietly hidden.
 
 ## The chart is the argument
 
@@ -97,7 +151,7 @@ implementation's own output — a test that records what the code said proves
 only that the code has not changed.
 
 ```bash
-node --test        # 113 tests, Node 18+, no dependencies
+node --test        # 140 tests, Node 18+, no dependencies
 ```
 
 Among them, the anchors that would catch a wrong scale:
@@ -142,6 +196,14 @@ while the air coming in is near body temperature and carries its own humidity.
 The requirement now rises with the outdoor temperature, and above 32 °C nothing
 qualifies. Found in the rendered chart, not by reasoning; pinned by a test.
 
+**The room jumped five degrees overnight.** The indoor curve from measured
+hours indexed the lag by hour-of-day, so midnight with a four-hour lag reached
+back to *the same day's* eight in the evening — the afternoon it was supposed to
+be recovering from. Live Cologne data showed 28.2 °C at midnight and 23.6 °C at
+04:00, a drop no building performs. Indexing the continuous series fixed it, and
+[a regression test](test/forecast.test.js) now fails if the room moves more than
+2 °C in an hour.
+
 ## Honest limits
 
 - **Not medical advice.** The thresholds are calibrated to published
@@ -155,6 +217,9 @@ qualifies. Found in the rendered chart, not by reasoning; pinned by a test.
   production tenfold.
 - **The daily curve is a model**, reconstructed from two numbers. It is drawn
   dashed for that reason.
+- **The forecast is a forecast.** Open-Meteo is a model, not a sensor on your
+  street. The indoor curve is a model on top of that, and the page marks which
+  is which.
 - **Stull's fit has an envelope**: roughly −20 to 50 °C and 5 to 99 % humidity.
   Outside it the tool says so rather than quietly extrapolating.
 

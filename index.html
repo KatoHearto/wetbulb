@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>wetbulb — the temperature that decides whether you can cool down</title>
-<meta name="description" content="Air temperature does not tell you whether heat is dangerous. Wet-bulb temperature does. Find out where you stand, whether a fan helps, and when to open the windows. Works offline.">
+<meta name="description" content="Air temperature does not tell you whether heat is dangerous. Wet-bulb temperature does. Find out where you stand, whether a fan helps, and which hour of today is really the worst. Works offline; fetches real weather if you ask.">
 <meta name="color-scheme" content="dark light">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🌡️</text></svg>">
 <link rel="stylesheet" href="styles.css">
@@ -30,16 +30,47 @@
       <aside class="masthead-note">
         <p class="mono-label">what this is</p>
         <p>
-          A calculator and a set of decisions, not a warning service. It knows
-          nothing about where you are — you tell it the numbers.
+          A calculator and a set of decisions, not a warning service. Give it two
+          numbers, or let it fetch real hourly weather for a place — the sliders
+          keep working either way.
         </p>
-        <p class="privacy">Runs entirely in this browser. No account, no network.</p>
+        <p class="privacy">No account, no tracking. Works with no network at all — and if you ask it for real weather, it sends only your coordinates to <a href="https://open-meteo.com">Open-Meteo</a>.</p>
       </aside>
     </div>
   </div>
 </header>
 
 <main class="wrap">
+
+  <!-- ===================== LOCATION ===================== -->
+  <section class="instrument instrument-first" aria-labelledby="where-heading">
+    <div class="instrument-head">
+      <h2 id="where-heading">Real weather, if you want it</h2>
+      <p class="instrument-sub">
+        Everything below works from the two sliders alone. Fetching hourly data
+        adds three things the sliders cannot know: which hour of today is
+        actually the worst, how many nights in a row have given no relief, and
+        whether this heat is new to you.
+      </p>
+    </div>
+
+    <div class="where">
+      <form id="place-form" class="place-form" autocomplete="off">
+        <label class="control">
+          <span class="control-label">Search for a place</span>
+          <div class="place-row">
+            <input type="text" id="place" placeholder="Cologne, Delhi, Phoenix…" maxlength="80">
+            <button type="submit" class="preset">Look up</button>
+          </div>
+        </label>
+        <button type="button" id="here" class="preset preset-wide">Use my location</button>
+      </form>
+
+      <div class="where-status" id="where-status" aria-live="polite"></div>
+    </div>
+
+    <div id="findings" class="findings"></div>
+  </section>
 
   <!-- ===================== THE STATE CHART ===================== -->
   <section class="instrument" aria-labelledby="chart-heading">
@@ -113,11 +144,12 @@
   <!-- ===================== THE DAY ===================== -->
   <section class="instrument" aria-labelledby="day-heading">
     <div class="instrument-head">
-      <h2 id="day-heading">When to open the windows</h2>
-      <p class="instrument-sub">
-        The mistake almost everyone makes. An open window in the afternoon is a
-        heat source. This is a <strong>model</strong> of the day from a high and
-        a low — drawn as a dashed line, because it is not a measurement.
+      <h2 id="day-heading">The day, hour by hour</h2>
+      <p class="instrument-sub" id="day-sub">
+        Two questions on one time axis: when this air is at its worst, and when
+        opening a window stops importing heat. Without a fetched forecast both
+        curves are a <strong>model</strong> built from a high and a low, drawn
+        dashed for that reason.
       </p>
     </div>
 
