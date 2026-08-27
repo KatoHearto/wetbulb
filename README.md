@@ -121,7 +121,22 @@ by 0.0015, leaving thirteen ten-thousandths of clearance, and the faceted sphere
 came through. Radii are staggered now — sphere 1.0, zones 1.006, coastline
 1.012, marker 1.03.
 
-The second version had a colour ramp whose two cool bands differed by less than
+**Half the globe vanished when you turned it — and my own screenshots missed
+it.** The fragment shader decided visibility by comparing the surface normal
+against the camera, but the normal had been through the model matrix and the
+camera position had not: two different spaces. The visible hemisphere therefore
+rotated *with* the planet instead of staying put. At 90° of spin half the cells
+were gone; at 180° the two vectors were exactly opposed and every fragment was
+discarded.
+
+It survived review because every still I took was of a stationary camera, and a
+still cannot show a defect whose whole character is that it depends on where the
+camera is. It took someone turning the thing. The test that now guards it walks
+the camera through 360° in 5° steps and asserts both that the point under the
+camera is always visible and that the visible fraction never jumps — the
+signature of the failure was not a gradual fade but a collapse.
+
+The third version had a colour ramp whose two cool bands differed by less than
 a nuance. Most of the planet's land sits in those bands, so the dangerous fifth
 was hard to find. The ramp holds the cool end back and steps up sharply at
 25 °C, where a climate stops being uncomfortable and starts constraining what a
@@ -234,7 +249,7 @@ implementation's own output — a test that records what the code said proves
 only that the code has not changed.
 
 ```bash
-node --test        # 158 tests, Node 18+, no dependencies
+node --test        # 162 tests, Node 18+, no dependencies
 ```
 
 Among them, the anchors that would catch a wrong scale:

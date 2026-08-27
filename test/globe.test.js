@@ -188,3 +188,94 @@ describe('the colour ramp', () => {
     }
   });
 });
+
+describe('the visible hemisphere', () => {
+  /**
+   * The shader decides visibility from the sign of the transformed normal's
+   * Z component. That is reproduced here in plain arithmetic, because the
+   * bug it replaced was invisible to every other kind of test: the globe
+   * rendered, the matrices were right, the data was right — and half the
+   * planet disappeared as you turned it, because the normal and the camera
+   * were being compared in two different spaces.
+   *
+   * Reproduced before the fix: at 135° and 180° of spin the point directly
+   * in front of the camera scored -0.707 and -1.000 and was discarded.
+   */
+  const apply = (m, v) => [
+    m[0] * v[0] + m[4] * v[1] + m[8] * v[2],
+    m[1] * v[0] + m[5] * v[1] + m[9] * v[2],
+    m[2] * v[0] + m[6] * v[1] + m[10] * v[2],
+  ];
+
+  const modelFor = (cameraLatitude, cameraLongitude) =>
+    multiply(
+      rotateX((cameraLatitude * Math.PI) / 180),
+      rotateY((-cameraLongitude * Math.PI) / 180)
+    );
+
+  /** What the fragment shader computes: the normal's Z in view space. */
+  const facing = (latitude, longitude, cameraLatitude, cameraLongitude) =>
+    apply(modelFor(cameraLatitude, cameraLongitude), toCartesian(latitude, longitude))[2];
+
+  it('shows the point the camera is aimed at, at every longitude', () => {
+    for (let longitude = 0; longitude < 360; longitude += 15) {
+      const value = facing(20, longitude, 20, longitude);
+      assert.ok(
+        value > 0.99,
+        `at ${longitude}° the point under the camera scored ${value.toFixed(3)} — ` +
+          'this is the defect where half the globe vanished as it turned'
+      );
+    }
+  });
+
+  it('hides the far side, at every longitude', () => {
+    for (let longitude = 0; longitude < 360; longitude += 15) {
+      const opposite = (longitude + 180) % 360;
+      const value = facing(-20, opposite, 20, longitude);
+      assert.ok(
+        value < -0.5,
+        `at ${longitude}° the antipode scored ${value.toFixed(3)} and would be drawn`
+      );
+    }
+  });
+
+  it('keeps roughly half the sphere visible from anywhere', () => {
+    for (const [cameraLatitude, cameraLongitude] of [[0, 0], [20, 90], [-40, 180], [60, 270]]) {
+      let visible = 0;
+      let total = 0;
+      for (let latitude = -80; latitude <= 80; latitude += 10) {
+        for (let longitude = 0; longitude < 360; longitude += 10) {
+          total += 1;
+          if (facing(latitude, longitude, cameraLatitude, cameraLongitude) > 0) visible += 1;
+        }
+      }
+      const share = visible / total;
+      assert.ok(
+        share > 0.35 && share < 0.65,
+        `from ${cameraLatitude},${cameraLongitude} only ${(share * 100).toFixed(0)} % was visible`
+      );
+    }
+  });
+
+  it('turns smoothly, with no longitude where everything disappears', () => {
+    // The failure was not gradual: it went from fine, to half, to nothing.
+    // A sudden collapse in the visible count is the signature.
+    let previous = null;
+    for (let longitude = 0; longitude < 360; longitude += 5) {
+      let visible = 0;
+      for (let latitude = -60; latitude <= 60; latitude += 15) {
+        for (let sample = 0; sample < 360; sample += 15) {
+          if (facing(latitude, sample, 20, longitude) > 0) visible += 1;
+        }
+      }
+      assert.ok(visible > 20, `at ${longitude}° only ${visible} points were visible`);
+      if (previous !== null) {
+        assert.ok(
+          Math.abs(visible - previous) < 25,
+          `the visible count jumped from ${previous} to ${visible} at ${longitude}°`
+        );
+      }
+      previous = visible;
+    }
+  });
+});

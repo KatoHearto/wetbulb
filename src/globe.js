@@ -53,16 +53,26 @@ void main() {
  * The fragment shader carries the one piece of shading that is not decoration:
  * facing away from the camera fades a fragment out. Without it the far side of
  * the globe draws over the near side and the whole thing reads as a flat disc.
+ *
+ * The test compares the normal against +Z, and that is the whole subtlety.
+ * `vNormal` has already been through the model matrix, so it lives in view
+ * space, where the camera always looks down −Z from the origin and a surface
+ * facing the viewer has a normal pointing at +Z. The first version compared it
+ * against the camera's position in the *globe's* frame instead: two different
+ * spaces, so the visible hemisphere rotated with the planet rather than staying
+ * put. At 180° of spin the two were exactly opposed and every fragment was
+ * discarded — the globe simply vanished.
  */
 const FRAGMENT_SHADER = `
 precision mediump float;
 varying vec3 vColour;
 varying vec3 vNormal;
-uniform vec3 eye;
 uniform float minAlpha;
 uniform float rounded;
 void main() {
-  float facing = dot(normalize(vNormal), normalize(eye));
+  // View space: the viewer is at the origin looking down -Z, so anything
+  // turned towards them has a normal with a positive Z component.
+  float facing = normalize(vNormal).z;
   if (facing < -0.08) discard;
 
   // Point sprites are square. The location marker is a marker, so it gets
@@ -280,7 +290,6 @@ export function createGlobe(canvas, options = {}) {
     model: gl.getUniformLocation(program, 'model'),
     view: gl.getUniformLocation(program, 'view'),
     projection: gl.getUniformLocation(program, 'projection'),
-    eye: gl.getUniformLocation(program, 'eye'),
     pointScale: gl.getUniformLocation(program, 'pointScale'),
     minAlpha: gl.getUniformLocation(program, 'minAlpha'),
     rounded: gl.getUniformLocation(program, 'rounded'),
@@ -385,20 +394,10 @@ export function createGlobe(canvas, options = {}) {
       rotateY((-camera.longitude * Math.PI) / 180)
     );
 
-    // Where the camera sits in the globe's own frame, for the facing test.
-    const phi = (camera.latitude * Math.PI) / 180;
-    const lambda = (camera.longitude * Math.PI) / 180;
-    const eye = [
-      Math.cos(phi) * Math.sin(lambda),
-      Math.sin(phi),
-      Math.cos(phi) * Math.cos(lambda),
-    ];
-
     gl.useProgram(program);
     gl.uniformMatrix4fv(uniforms.projection, false, projection);
     gl.uniformMatrix4fv(uniforms.view, false, view);
     gl.uniformMatrix4fv(uniforms.model, false, model);
-    gl.uniform3fv(uniforms.eye, new Float32Array(eye));
 
     gl.uniform1f(uniforms.minAlpha, 1);
     gl.uniform1f(uniforms.pointScale, 1);
