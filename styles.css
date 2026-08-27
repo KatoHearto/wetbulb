@@ -764,18 +764,50 @@ input[type="text"]::placeholder { color: var(--ink-faint); }
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
+  position: relative;
+}
+
+/* The chevron the browser stopped drawing when `appearance: none` removed the
+   native control. Without it the switch reads as a button, and a button does
+   not promise a list. Drawn from borders so it inherits `currentColor` and
+   follows the theme; a data-URI would have needed a hard-coded colour. */
+.language-pick::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: 10px;
+  width: 5px;
+  height: 5px;
+  border-inline-end: 1px solid var(--ink-soft);
+  border-bottom: 1px solid var(--ink-soft);
+  transform: translateY(-2px) rotate(45deg);
+  pointer-events: none;
 }
 
 .language-select {
   appearance: none;
-  background: transparent;
+  /* NOT transparent. With `appearance: none` the OPTION elements inherit the
+     colour and nothing else, and the popup is painted by the operating
+     system -- measured at 1.23:1 against a white OS popup, where AA wants
+     4.5:1. Only the cursor highlight made a row readable. */
+  background: var(--bg-sunken);
   color: var(--ink);
   border: 1px solid var(--line-bright);
   border-radius: 0;
-  padding: 4px 10px;
+  padding: 4px 26px 4px 10px;
   font: inherit;
   font-size: 0.82rem;
   cursor: pointer;
+}
+
+/* The rows of the open list. Explicit on both axes, because inheriting one
+   and not the other is what broke it. */
+.language-select option {
+  background: var(--bg-panel);
+  color: var(--ink);
+}
+
+.language-select:hover {
+  border-color: var(--ink-faint);
 }
 
 .language-select:focus-visible {
@@ -823,6 +855,12 @@ input[type="text"]::placeholder { color: var(--ink-faint); }
    first attempt and it glued every value to its label; what actually needed
    protecting was each number-plus-unit, which the bidi algorithm reorders
    into "C° 32.0" unless it is isolated from the text around it. */
+/* The chevron moves to the leading edge under RTL (inset-inline-end handles
+   that), so the padding that clears it has to move with it. */
+[dir='rtl'] .language-select {
+  padding: 4px 10px 4px 26px;
+}
+
 [dir='rtl'] .readout-table .value,
 [dir='rtl'] .control-value,
 [dir='rtl'] .factor-shift,

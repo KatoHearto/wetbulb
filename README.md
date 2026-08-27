@@ -471,6 +471,36 @@ the readout (`U+2212`) and the hyphens in "Höchst- und", "Herz- oder",
 minus signs and 3 hyphens untouched, the numeric ranges (`22–25°`) already
 correct and left alone. Both facts now have tests.
 
+### The switch nobody could read
+
+Reported: the language dropdown is hard to read unless you hover it. The cause
+is one declaration. `appearance: none` strips the native control, and
+`background: transparent` then leaves the OPTION rows with an inherited
+near-white colour and no background of their own — while the popup list is
+painted by the operating system. Measured on the shipped stylesheet:
+
+| | | |
+|---|---|---|
+| dark theme, option on a white OS popup | `#ece7df` on `#ffffff` | **1.23:1** |
+| light theme, option on a dark OS popup | `#1a1714` on `#202020` | **1.10:1** |
+| the closed control, for comparison | `#ece7df` on `#0e0d0c` | 15.78:1 |
+
+AA wants 4.5:1. Only the cursor highlight made a row legible, which is exactly
+how it was reported. It failed in **both** themes for opposite reasons: the
+page declares `color-scheme: dark light`, so the popup follows the operating
+system rather than the page.
+
+The closed control was fine throughout — which is why every screenshot ever
+taken of this page looked correct, and why the fix carries a test rather than
+an eyeball check. The rows now get an explicit background *and* colour, both
+from tokens; measured back out of a real browser at `#ece7df` on `#151312`
+(15.05:1) and `#1a1714` on `#fffdf9` (17.57:1).
+
+It also grew the chevron that `appearance: none` had removed. Without it the
+control reads as a button, and a button does not promise a list. Drawn from
+borders so it inherits the theme's token — a data-URI arrow would have needed
+a hard-coded colour — and the padding that clears it flips under RTL.
+
 ### What is deliberately not translated
 
 The charts and the globe do not mirror under RTL. A time axis running 00 to 23
